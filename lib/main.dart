@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const TurnifyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class TurnifyApp extends StatelessWidget {
+  const TurnifyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp(
+      title: 'Turnify',
+      debugShowCheckedModeBanner: false,
+      home: Pantalla1(),
     );
   }
 }
