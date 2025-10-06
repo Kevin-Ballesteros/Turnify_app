@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pantalla_login.dart';
 import 'pantalla_registro.dart';
-import 'pantalla_recuperar_password.dart';
 
 // Colores de Turnify
 class TurnifyColors {
