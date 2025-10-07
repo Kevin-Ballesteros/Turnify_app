@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pantalla_configuracion_cliente.dart';
+import 'pantalla_editar_info_cliente.dart';
 
 class TurnifyColors {
   static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
@@ -82,7 +83,9 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
                 icon: Icons.person_outline,
                 title: 'Perfil',
                 onTap: () {
-                  print('Ir a Detalles del Perfil');
+                  Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => const PantallaEditarInfoCliente()),
+                  );
                 },
               ),
               const SizedBox(height: 10),
