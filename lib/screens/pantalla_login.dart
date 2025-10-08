@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pantalla_registro.dart';
 import 'pantalla_recuperar_password.dart';
+import 'cliente/pantalla_dashboard_cliente.dart';
+import 'negocio/pantalla_dashboard_negocio.dart';
 
 // Colores de Turnify
 class TurnifyColors {
@@ -95,7 +96,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     ],
                   ),
                 ),
-              
+
                 const SizedBox(height: 30),
                 
                 // Campo Nombre registrado
@@ -258,10 +259,40 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       }
                       
                       if (_formkey.currentState!.validate()) {
-                        print('Iniciando sesión...');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Iniciando sesión...')),
-                        );
+                        // Obtener valores de los campos
+                        String nombre = _nombreCtrl.text.trim();
+                        String email = _emailCtrl.text.trim();
+                        String password = _passwordCtrl.text.trim();
+                        
+                        // Validar credenciales de cliente
+                        if (nombre == 'clienteTest1' && 
+                            email == 'cliente32@example.com' && 
+                            password == 'Cliente213@') {
+                          // Navegar al dashboard de cliente
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const DashboardCliente()),
+                          );
+                        }
+                        // Validar credenciales de negocio
+                        else if (nombre == 'negocioTest1' && 
+                                 email == 'negociotest21@example.com' && 
+                                 password == 'Negocio213@') {
+                          // Navegar al dashboard de negocio
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const DashboardNegocio()),
+                          );
+                        }
+                        // Credenciales incorrectas
+                        else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Credenciales incorrectas'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -281,40 +312,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 20),
-
-                // Link de "¿No tienes cuenta? Crear cuenta."
-                Center(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PantallaRegistro()),
-                      );
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: TurnifyColors.textGray,
-                          fontSize: 14,
-                        ),
-                        children: [
-                          TextSpan(text: '¿No tienes cuenta? '),
-                          TextSpan(
-                            text: 'Crear cuenta',
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                   const SizedBox(height: 40),
+                                
+                const SizedBox(height: 40),
                 
                 // Checkbox Términos y condiciones
                 Row(
@@ -364,6 +363,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     ),
                   ],
                 ),
+                
               ],
             ),
           ),
