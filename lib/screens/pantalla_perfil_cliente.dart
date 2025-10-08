@@ -21,6 +21,41 @@ class PantallaPerfilCliente extends StatefulWidget {
 
 class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
 
+  void _mostrarDialogoSalir() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Cerrar Sesión'),
+          content: Text('¿Estás seguro de que quieres salir de Turnify?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: Text(
+                'Aceptar',
+                style: TextStyle(color: TurnifyColors.primaryTeal),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                print('Cerrando sesión...');
+                // Aquí puedes agregar la lógica para cerrar sesión
+                // Por ejemplo: Navigator.pushAndRemoveUntil(...) para ir a login
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: TurnifyColors.primaryTeal),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,10 +63,11 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
       appBar: AppBar(
         backgroundColor: TurnifyColors.white,
         elevation: 0,
-        title: Text(
+        automaticallyImplyLeading: false, // Quita la flecha de regreso
+        title: const Text(
           'Mi Perfil',
           style: TextStyle(
-            color: TurnifyColors.black,
+            color: Color.fromARGB(255, 54, 54, 54),
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -68,7 +104,8 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
               ),
               const SizedBox(height: 30),
 
-              // Opciones de perfil
+              // Opciones de perfil en cards
+              
               _buildProfileOption(
                 icon: Icons.person_outline,
                 title: 'Perfil',
@@ -78,7 +115,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
                   );
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
 
               _buildProfileOption(
                 icon: Icons.settings_outlined,
@@ -89,57 +126,57 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
                   );
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
 
               _buildProfileOption(
                 icon: Icons.logout,
                 title: 'Salir',
-                onTap: () {
-                  print('Cerrar Sesión');
-                },
+                onTap: _mostrarDialogoSalir,
               ),
             ],
           ),
         ),
       ),
-      // Aquí iba el BottomNavigationBar que eliminamos
     );
   }
 
-  // Widget auxiliar para crear las opciones de perfil
-  Widget _buildProfileOption({
+    Widget _buildProfileOption({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: TurnifyColors.lightGray.withOpacity(0.3),
-              width: 1,
+    }) {
+    return Material(
+      color: Colors.transparent, // permite usar InkWell ripple sobre cualquier fondo
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        splashColor: const Color.fromARGB(255, 160, 160, 160).withOpacity(0.16),
+        highlightColor: const Color.fromARGB(255, 90, 90, 90).withOpacity(0.08),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: TurnifyColors.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(icon, color: TurnifyColors.primaryTeal, size: 28),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: TurnifyColors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: TurnifyColors.lightGray, size: 18),
+              ],
             ),
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: TurnifyColors.primaryTeal, size: 28),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: TurnifyColors.black,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios, color: TurnifyColors.lightGray, size: 18),
-          ],
         ),
       ),
     );

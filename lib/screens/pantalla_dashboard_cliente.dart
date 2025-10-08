@@ -106,10 +106,6 @@ class _DashboardClienteState extends State<DashboardCliente> {
   }
 }
 
-// --------------------------------------------------------------------------
-// WIDGET PARA EL CONTENIDO DEL DASHBOARD (Extraído de la función build original)
-// --------------------------------------------------------------------------
-
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent();
 
@@ -372,12 +368,12 @@ class _DashboardContent extends StatelessWidget {
               title: 'Agendar Turnos',
               subtitle: 'Reserva tu turno en tus negocios favoritos',
               onTap: () {
-               // Navigator.push(
+                //Navigator.push(
                  // context,
                  // MaterialPageRoute(
                   //  builder: (context) => const PantallaAgendarTurnos(),
                  // ),
-              //  );
+               // );
                 // print('Ir a Agendar Turnos');
               },
             ),
