@@ -438,6 +438,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     style: TextStyle(color: TurnifyColors.textGray),
                     decoration: InputDecoration(
                       hintText: 'Ej: La Pizzería de Jhon',
+                      hintStyle: TextStyle(
+                        color: TurnifyColors.lightGray,
+                        fontSize: 14,
+                      ),
                       filled: true,
                       fillColor: TurnifyColors.inputGray,
                       border: OutlineInputBorder(

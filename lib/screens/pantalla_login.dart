@@ -300,7 +300,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           fontSize: 14,
                         ),
                         children: [
-                          TextSpan(text: 'Ya tienes una cuenta? '),
+                          TextSpan(text: '¿No tienes cuenta? '),
                           TextSpan(
                             text: 'Crear cuenta',
                             style: TextStyle(
