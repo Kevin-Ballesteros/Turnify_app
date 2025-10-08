@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pantalla_login.dart';
-import 'pantalla_dashboard_cliente.dart';
-import 'pantalla_dashboard_negocio.dart';
+import 'cliente/pantalla_dashboard_cliente.dart';
+import 'negocio/pantalla_dashboard_negocio.dart';
 
 // Colores de Turnify
 class TurnifyColors {
@@ -76,7 +76,6 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       _tieneCaracterEspecial = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
       _tieneLongitudMinima = password.length >= 8;
 
-      // ELIMINADA: Lógica de cálculo de _fortalezaPassword y _colorFortaleza
     });
   }
 
@@ -345,13 +344,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 ),
 
                 // Lista de requisitos de contraseña (SIEMPRE VISIBLE)
-                // Se eliminó la condición if (_passwordCtrl.text.isNotEmpty)
                 const SizedBox(height: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ELIMINADA: La fila con LinearProgressIndicator y texto "Débil/Fuerte"
-
                     _buildRequisitoItem('Al menos 8 caracteres', _tieneLongitudMinima),
                     _buildRequisitoItem('Una letra mayúscula (A-Z)', _tieneMayuscula),
                     _buildRequisitoItem('Una letra minúscula (a-z)', _tieneMinuscula),

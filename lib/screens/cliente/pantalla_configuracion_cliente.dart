@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:turnify/screens/cliente/pantalla_configuracion_notificaciones.dart';
+import "pantalla_cambiar_contraseña.dart";
 
 class TurnifyColors {
  static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
@@ -31,6 +33,7 @@ class PantallaConfiguracionCliente extends StatelessWidget {
           style: TextStyle(
             color: TurnifyColors.primaryTeal,
             fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -40,9 +43,11 @@ class PantallaConfiguracionCliente extends StatelessWidget {
           // Opción 1: Contraseña
           _buildConfigurationTile(
             icon: Icons.vpn_key_outlined,
-            title: 'Contraseña',
+            title: 'Actualizar Contraseña',
             onTap: () {
-              print('Navegar a pantalla de cambio de contraseña');
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const PantallaCambiarContrasena()),
+              );
             },
           ),
 
@@ -57,10 +62,12 @@ class PantallaConfiguracionCliente extends StatelessWidget {
 
           // Opción 3: Información Personal
           _buildConfigurationTile(
-            icon: Icons.person_outlined,
-            title: 'Información Personal',
+            icon: Icons.notifications_outlined,
+            title: 'Notificaciones',
             onTap: () {
-              print('Navegar a edición de perfil');
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const PantallaConfiguracionNotificaciones()),
+              );
             },
           ),
         ],
