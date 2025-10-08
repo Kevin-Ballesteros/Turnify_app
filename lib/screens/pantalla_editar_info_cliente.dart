@@ -235,7 +235,7 @@ class _PantallaPerfilClienteState extends State<PantallaEditarInfoCliente> {
                       isExpanded: true,
                       icon: Icon(Icons.keyboard_arrow_down, color: TurnifyColors.lightGray),
                       style: TextStyle(color: TurnifyColors.black, fontSize: 16),
-                      items: ['Masculino', 'Femenino', 'Otro'].map((String value) {
+                      items: ['Masculino', 'Femenino'].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),

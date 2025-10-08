@@ -28,16 +28,6 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
       appBar: AppBar(
         backgroundColor: TurnifyColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: TurnifyColors.black,
-          ),
-          onPressed: () {
-            // Esto solo es funcional si se navega a la pantalla (Navigator.push)
-            Navigator.pop(context);
-          },
-        ),
         title: Text(
           'Mi Perfil',
           style: TextStyle(
