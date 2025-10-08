@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_editar_info_cliente.dart';
+import 'package:turnify/screens/pantalla_bienvenida.dart';
 
 class TurnifyColors {
   static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
@@ -22,39 +23,34 @@ class PantallaPerfilCliente extends StatefulWidget {
 class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
 
   void _mostrarDialogoSalir() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Cerrar Sesión'),
-          content: Text('¿Estás seguro de que quieres salir de Turnify?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-              },
-              child: Text(
-                'Aceptar',
-                style: TextStyle(color: TurnifyColors.primaryTeal),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-                print('Cerrando sesión...');
-                // Aquí puedes agregar la lógica para cerrar sesión
-                // Por ejemplo: Navigator.pushAndRemoveUntil(...) para ir a login
-              },
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: TurnifyColors.primaryTeal),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        title: const Text('Cerrar Sesión'),
+        content: const Text('¿Estás seguro de que quieres salir de Turnify?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancelar', style: TextStyle(color: TurnifyColors.primaryTeal)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop(); // cerrar diálogo
+              // Aquí limpia cualquier estado/session storage si corresponde
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const Pantalla1()),
+                (Route<dynamic> route) => false,
+              );
+            },
+            child: Text('Aceptar', style: TextStyle(color: TurnifyColors.primaryTeal)),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

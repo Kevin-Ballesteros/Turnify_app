@@ -33,6 +33,61 @@ class _PantallaPerfilClienteState extends State<PantallaEditarInfoCliente> {
     super.dispose();
   }
 
+  void _mostrarDialogoEliminarCuenta() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            '¿Eliminar cuenta?',
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Esta acción es permanente. Se eliminará toda tu información y no podrás recuperar tu cuenta.',
+            style: TextStyle(
+              color: TurnifyColors.textGray,
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: TurnifyColors.lightGray),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                print('Eliminando cuenta...');
+                // Aquí puedes agregar la lógica para eliminar la cuenta
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Cuenta eliminada exitosamente'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              },
+              child: Text(
+                'Eliminar',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,7 +290,7 @@ class _PantallaPerfilClienteState extends State<PantallaEditarInfoCliente> {
                       isExpanded: true,
                       icon: Icon(Icons.keyboard_arrow_down, color: TurnifyColors.lightGray),
                       style: TextStyle(color: TurnifyColors.black, fontSize: 16),
-                      items: ['Masculino', 'Femenino'].map((String value) {
+                      items: ['Masculino', 'Femenino', 'Otro'].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -281,6 +336,31 @@ class _PantallaPerfilClienteState extends State<PantallaEditarInfoCliente> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+                
+                // Botón Eliminar Cuenta
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: _mostrarDialogoEliminarCuenta,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.red, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: Text(
+                      'Eliminar Cuenta',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red,
                       ),
                     ),
                   ),
