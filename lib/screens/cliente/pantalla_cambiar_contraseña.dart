@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/screens/pantalla_recuperar_password.dart';
 
 // Colores de Turnify
 class TurnifyColors {
@@ -145,7 +146,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      print('Ir a recuperar contraseña');
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaRecuperarPassword()));
                     },
                     child: Text(
                       'Olvidó Su Contraseña?',

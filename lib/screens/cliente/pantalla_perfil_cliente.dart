@@ -63,7 +63,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
         title: const Text(
           'Mi Perfil',
           style: TextStyle(
-            color: Color.fromARGB(255, 54, 54, 54),
+            color: TurnifyColors.primaryTeal,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -75,18 +75,16 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // Círculo de perfil grande
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: TurnifyColors.primaryTeal,
-                    shape: BoxShape.circle,
+              // Círculo con icono de persona (avatar)
+              const CircleAvatar(
+                  radius: 70,
+                  backgroundColor: TurnifyColors.lightTeal,
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 85,
                   ),
                 ),
-              ),
               const SizedBox(height: 20),
 
               // Nombre del usuario

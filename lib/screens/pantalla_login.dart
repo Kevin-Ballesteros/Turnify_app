@@ -277,7 +277,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           // Validar credenciales de cliente
                           if (nombre == 'José Fernando Campos' && 
                               email == 'josefercampo213@gmail.com' && 
-                              password == 'diosesgrande213@') {
+                              password == 'Diosesgrande213@') {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => const DashboardCliente()),
