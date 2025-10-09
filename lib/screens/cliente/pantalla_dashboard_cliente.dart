@@ -243,7 +243,7 @@ class _DashboardContent extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Gilberto Hernández',
+                        'José Fernando Campos',
                         style: TextStyle(
                           color: TurnifyColors.black,
                           fontSize: 16,
