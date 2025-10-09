@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pantalla_editar_info_cliente.dart';
 import 'pantalla_cambiar_contraseña.dart';
+import 'pantalla_configuracion_notificaciones.dart';
 
 // Colores de Turnify
 class TurnifyColors {
@@ -94,7 +95,9 @@ class PantallaConfiguracionCliente extends StatelessWidget {
             subtitle: 'Configurar alertas y recordatorios',
             iconColor: Colors.amber,
             onTap: () {
-              print('Ir a Notificaciones');
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const PantallaConfiguracionNotificaciones()),
+              );
             },
           ),
           
