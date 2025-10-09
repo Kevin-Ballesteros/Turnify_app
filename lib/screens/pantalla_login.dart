@@ -275,8 +275,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           String password = _passwordCtrl.text.trim();
                           
                           // Validar credenciales de cliente
-                          if (nombre == 'Gilberto Hernández' && 
-                              email == 'gilbertitoHernan213@gmail.com' && 
+                          if (nombre == 'José Fernando Campos' && 
+                              email == 'josefercampo213@gmail.com' && 
                               password == 'diosesgrande213@') {
                             Navigator.pushReplacement(
                               context,
@@ -284,7 +284,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             );
                           }
                           // Validar credenciales de negocio
-                          else if (nombre == 'Veterinaria Santa rosa' && 
+                          else if (nombre == 'Veterinaria San Martin' && 
                                   email == 'veterinariaSR@gmail.com' && 
                                   password == 'LosToros213@') {
                             Navigator.pushReplacement(
