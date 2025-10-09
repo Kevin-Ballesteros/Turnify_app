@@ -113,7 +113,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                   style: TextStyle(color: TurnifyColors.textGray),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 199, 199, 199),
+                    fillColor: const Color.fromARGB(255, 227, 227, 227),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -180,7 +180,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                   },
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Color.fromARGB(255, 199, 199, 199),
+                    fillColor: const Color.fromARGB(255, 238, 238, 238),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -253,7 +253,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                   },
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Color.fromARGB(255, 199, 199, 199),
+                    fillColor: const Color.fromARGB(255, 230, 230, 230),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
