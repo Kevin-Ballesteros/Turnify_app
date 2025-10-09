@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pantalla_notificaciones.dart';
 import 'pantalla_perfil_cliente.dart'; 
 import 'pantalla_configuracion_cliente.dart'; 
+import 'pantalla_agendar_turnos.dart';
 
 
 // Colores de Turnify
@@ -368,12 +369,12 @@ class _DashboardContent extends StatelessWidget {
               title: 'Agendar Turnos',
               subtitle: 'Reserva tu turno en tus negocios favoritos',
               onTap: () {
-                //Navigator.push(
-                 // context,
-                 // MaterialPageRoute(
-                  //  builder: (context) => const PantallaAgendarTurnos(),
-                 // ),
-               // );
+                Navigator.push(
+                 context,
+                MaterialPageRoute(
+                  builder: (context) => const PantallaAgendarTurnos(),
+                 ),
+               );
                 // print('Ir a Agendar Turnos');
               },
             ),
