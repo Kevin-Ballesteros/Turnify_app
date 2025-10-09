@@ -235,14 +235,14 @@ class _DashboardContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'Hola, bienvenido José',
+                        'Hola, bienvenido a Turnify',
                         style: TextStyle(
                           color: TurnifyColors.lightGray,
                           fontSize: 14,
                         ),
                       ),
                       Text(
-                        'José Fernando Campos',
+                        'Gilberto Hernández',
                         style: TextStyle(
                           color: TurnifyColors.black,
                           fontSize: 16,

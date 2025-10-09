@@ -28,6 +28,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
   bool _aceptaTerminos = false;
+  bool _isLoading = false; // Variable para controlar el estado de carga
 
   @override
   void dispose() {
@@ -96,7 +97,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     ],
                   ),
                 ),
-
+  
                 const SizedBox(height: 30),
                 
                 // Campo Nombre registrado
@@ -246,73 +247,101 @@ class _PantallaLoginState extends State<PantallaLogin> {
                 const SizedBox(height: 40),
                 
                 // Botón Iniciar sesión
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (!_aceptaTerminos) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Debe aceptar los términos y condiciones')),
-                        );
-                        return;
-                      }
-                      
-                      if (_formkey.currentState!.validate()) {
-                        // Obtener valores de los campos
-                        String nombre = _nombreCtrl.text.trim();
-                        String email = _emailCtrl.text.trim();
-                        String password = _passwordCtrl.text.trim();
-                        
-                        // Validar credenciales de cliente
-                        if (nombre == 'clienteTest1' && 
-                            email == 'cliente32@example.com' && 
-                            password == 'Cliente213@') {
-                          // Navegar al dashboard de cliente
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const DashboardCliente()),
-                          );
-                        }
-                        // Validar credenciales de negocio
-                        else if (nombre == 'negocioTest1' && 
-                                 email == 'negociotest21@example.com' && 
-                                 password == 'Negocio213@') {
-                          // Navegar al dashboard de negocio
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const DashboardNegocio()),
-                          );
-                        }
-                        // Credenciales incorrectas
-                        else {
+                // Botón Iniciar sesión
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : () async {
+                        if (!_aceptaTerminos) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Credenciales incorrectas'),
-                              backgroundColor: Colors.red,
-                            ),
+                            const SnackBar(content: Text('Debe aceptar los términos y condiciones')),
                           );
+                          return;
                         }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TurnifyColors.primaryTeal,
-                      foregroundColor: TurnifyColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
+                        
+                        if (_formkey.currentState!.validate()) {
+                          // Activar estado de carga
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          
+                          // Simular carga de 2 segundos
+                          await Future.delayed(Duration(seconds: 2));
+                          
+                          // Obtener valores de los campos
+                          String nombre = _nombreCtrl.text.trim();
+                          String email = _emailCtrl.text.trim();
+                          String password = _passwordCtrl.text.trim();
+                          
+                          // Validar credenciales de cliente
+                          if (nombre == 'Gilberto Hernández' && 
+                              email == 'gilbertitoHernan213@gmail.com' && 
+                              password == 'diosesgrande213@') {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const DashboardCliente()),
+                            );
+                          }
+                          // Validar credenciales de negocio
+                          else if (nombre == 'Veterinaria Santa rosa' && 
+                                  email == 'veterinariaSR@gmail.com' && 
+                                  password == 'LosToros213@') {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const DashboardNegocio()),
+                            );
+                          }
+                          // Credenciales incorrectas
+                          else {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Credenciales incorrectas'),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.fromLTRB(
+                                  16,
+                                  MediaQuery.of(context).padding.top + 16,
+                                  16,
+                                  0,
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TurnifyColors.primaryTeal,
+                        foregroundColor: TurnifyColors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 0,
+                        disabledBackgroundColor: TurnifyColors.lightGray,
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'iniciar sesión',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                                
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'iniciar sesión',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                       ),
+
                 const SizedBox(height: 40),
                 
                 // Checkbox Términos y condiciones
