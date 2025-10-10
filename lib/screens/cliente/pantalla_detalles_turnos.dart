@@ -1,21 +1,6 @@
+// lib/screens/pantalla_detalles_turnos.dart
 import 'package:flutter/material.dart';
 
-// Definición simplificada de colores (debe coincidir con la de tu app)
-class TurnifyColors {
-  static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
-  static const Color lightTeal = Color.fromARGB(255, 149, 214, 211);
-  static const Color textGray = Color(0xFF666666);
-  static const Color lightGray = Color(0xFF999999);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF333333);
-  static const Color starYellow = Color.fromARGB(255, 255, 193, 7);
-  static const Color cardBackground = Color(0xFFF5F5F5); 
-}
-
-// -----------------------------------------------------------------------
-// MODELO DE DATOS SIMPLIFICADO para pasar la info del negocio
-// (Necesario para que el archivo compile)
-// -----------------------------------------------------------------------
 class BusinessData {
   final String name;
   final String category;
@@ -24,6 +9,10 @@ class BusinessData {
   final String description;
   final List<Map<String, dynamic>> services;
 
+  /// Schedule opcional: mapa por día corto -> { 'start': 'HH:mm', 'end': 'HH:mm' } o null si cerrado
+  /// claves: 'lun','mar','mie','jue','vie','sab','dom'
+  final Map<String, Map<String, String>?> schedule;
+
   BusinessData({
     required this.name,
     required this.category,
@@ -31,15 +20,20 @@ class BusinessData {
     required this.address,
     required this.description,
     required this.services,
-  });
+    Map<String, Map<String, String>?>? schedule,
+  }) : schedule = schedule ??
+            {
+              'lun': {'start': '08:00 AM', 'end': '7:00 PM'},
+              'mar': {'start': '08:00 AM', 'end': '7:00 PM'},
+              'mie': {'start': '08:00 AM', 'end': '7:00 PM'},
+              'jue': {'start': '08:00 AM', 'end': '7:00 PM'},
+              'vie': {'start': '08:00 AM', 'end': '7:00 PM'},
+              'sab': {'start': '08:00 AM', 'end': '4:00 PM'}, 
+            };
 }
 
-// -----------------------------------------------------------------------
-// PANTALLA PRINCIPAL: Stateful para manejar la selección
-// -----------------------------------------------------------------------
 class PantallaDetallesTurno extends StatefulWidget {
   final BusinessData business;
-
   const PantallaDetallesTurno({super.key, required this.business});
 
   @override
@@ -47,320 +41,411 @@ class PantallaDetallesTurno extends StatefulWidget {
 }
 
 class _PantallaDetallesTurnoState extends State<PantallaDetallesTurno> {
-  // Estado para la gestión de la selección
   int? _selectedServiceIndex;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
-  // Objeto de servicio actualmente seleccionado
   Map<String, dynamic>? get _selectedService {
     if (_selectedServiceIndex == null) return null;
     return widget.business.services[_selectedServiceIndex!];
   }
-  
-  // Lógica para mostrar el DatePicker
+
+  // --------------------
+  // Helpers para schedule
+  // --------------------
+  String _keyFromWeekday(int wd) {
+    switch (wd) {
+      case DateTime.monday:
+        return 'lun';
+      case DateTime.tuesday:
+        return 'mar';
+      case DateTime.wednesday:
+        return 'mie';
+      case DateTime.thursday:
+        return 'jue';
+      case DateTime.friday:
+        return 'vie';
+      case DateTime.saturday:
+        return 'sab';
+      case DateTime.sunday:
+      default:
+        return 'dom';
+    }
+  }
+
+  String _labelFromKey(String k) {
+    switch (k) {
+      case 'lun':
+        return 'Lun';
+      case 'mar':
+        return 'Mar';
+      case 'mie':
+        return 'Mié';
+      case 'jue':
+        return 'Jue';
+      case 'vie':
+        return 'Vie';
+      case 'sab':
+        return 'Sáb';
+      case 'dom':
+      default:
+        return 'Dom';
+    }
+  }
+
+  Map<String, String>? _slotForDate(DateTime d) {
+    final key = _keyFromWeekday(d.weekday);
+    return widget.business.schedule[key];
+  }
+
+  int _parseToMinutes(String hhmm) {
+    final p = hhmm.split(':');
+    final h = int.tryParse(p[0]) ?? 0;
+    final m = int.tryParse(p[1]) ?? 0;
+    return h * 60 + m;
+  }
+
+  int _timeOfDayToMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
+
+  bool _isSelectionValid() {
+    if (_selectedService == null || _selectedDate == null || _selectedTime == null) return false;
+    final slot = _slotForDate(_selectedDate!);
+    if (slot == null) return false;
+    final start = _parseToMinutes(slot['start']!);
+    final end = _parseToMinutes(slot['end']!);
+    final selected = _timeOfDayToMinutes(_selectedTime!);
+    final duration = (_selectedService?['duration'] as int?) ?? 0;
+    return selected >= start && (selected + duration) <= end;
+  }
+
+  // --------------------
+  // Select Date (solo días abiertos)
+  // --------------------
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    final today = DateTime.now();
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
+      initialDate: _selectedDate ?? today,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 60)),
+      selectableDayPredicate: (date) {
+        final slot = _slotForDate(date);
+        if (slot == null) return false;
+        final s = slot['start'] ?? '00:00';
+        final e = slot['end'] ?? '00:00';
+        return _parseToMinutes(s) < _parseToMinutes(e);
+      },
+      builder: (context, child) => Theme(data: Theme.of(context), child: child!),
     );
-    if (picked != null && picked != _selectedDate) {
+
+    if (picked != null) {
       setState(() {
         _selectedDate = picked;
+        _selectedTime = null; // limpiar hora al cambiar fecha
       });
     }
   }
 
-  // Lógica para mostrar el TimePicker
+  // --------------------
+  // Select Time (muestra solo franjas válidas)
+  // --------------------
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecciona primero la fecha.')));
+      return;
     }
-  }
+    if (_selectedService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecciona primero un servicio.')));
+      return;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: TurnifyColors.white,
-      appBar: AppBar(
-        backgroundColor: TurnifyColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: TurnifyColors.textGray),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Detalles De Tu Turno',
-          style: TextStyle(
-            color: TurnifyColors.primaryTeal,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      
-      // El Stack permite fijar el resumen en la parte inferior
-      body: Stack(
-        children: [
-          // Cuerpo principal desplazable
-          SingleChildScrollView(
-            // --- CORRECCIÓN IMPLEMENTADA AQUÍ ---
-            padding: const EdgeInsets.only(bottom: 200), // Suficiente espacio para que el footer no tape el contenido
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBusinessInfoCard(), // Detalles del negocio
-                _buildServiceSelection(),  // Selección de servicios
-                _buildDateTimeSelection(), // Selección de fecha y hora
-              ],
-            ),
-          ),
-          
-          // Resumen de la selección (Fijo en la parte inferior)
-          _buildSummaryFooter(),
-        ],
-      ),
-    );
-  }
+    final slot = _slotForDate(_selectedDate!);
+    if (slot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El negocio está cerrado ese día.')));
+      return;
+    }
 
-  // -----------------------------------------------------------------------
-  // WIDGETS AUXILIARES
-  // -----------------------------------------------------------------------
+    final startM = _parseToMinutes(slot['start']!);
+    final endM = _parseToMinutes(slot['end']!);
+    if (startM >= endM) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Horario no disponible para la fecha seleccionada.')));
+      return;
+    }
 
-  Widget _buildBusinessInfoCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.business.name,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: TurnifyColors.black),
-          ),
-          const SizedBox(height: 5),
-          Row(
+    final stepMinutes = 30;
+    final options = <TimeOfDay>[];
+    for (int m = startM; m + 0 <= endM - 1; m += stepMinutes) {
+      final h = m ~/ 60;
+      final mm = m % 60;
+      options.add(TimeOfDay(hour: h, minute: mm));
+    }
+
+    final picked = await showModalBottomSheet<TimeOfDay>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: TurnifyColors.lightTeal.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  widget.business.category,
-                  style: const TextStyle(color: TurnifyColors.primaryTeal, fontSize: 13, fontWeight: FontWeight.w500),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                alignment: Alignment.centerLeft,
+                child: Text('Selecciona hora', style: theme.textTheme.titleMedium),
+              ),
+              const Divider(height: 1),
+              SizedBox(
+                height: 360,
+                child: ListView.separated(
+                  itemCount: options.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final t = options[i];
+                    final label = t.format(ctx);
+                    final duration = (_selectedService?['duration'] as int?) ?? 0;
+                    final endIfStart = _timeOfDayToMinutes(t) + duration;
+                    final fits = endIfStart <= endM;
+                    return ListTile(
+                      enabled: fits,
+                      title: Text(label),
+                      subtitle: fits ? null : Text('No disponible para este servicio', style: theme.textTheme.bodySmall?.copyWith(color: theme.disabledColor)),
+                      onTap: fits ? () => Navigator.of(ctx).pop(t) : null,
+                    );
+                  },
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.star, color: TurnifyColors.starYellow, size: 16),
-              Text(
-                '${widget.business.rating} (${widget.business.services.length * 50} reseñas)',
-                style: const TextStyle(color: TurnifyColors.textGray, fontSize: 13),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, color: TurnifyColors.lightGray, size: 16),
-              const SizedBox(width: 5),
-              Text(widget.business.address, style: const TextStyle(color: TurnifyColors.textGray)),
-            ],
-          ),
-          Row(
-            children: const [
-              Icon(Icons.access_time, color: TurnifyColors.lightGray, size: 16),
-              SizedBox(width: 5),
-              Text('Disponible hoy (Horario: 9:00 - 18:00)', style: TextStyle(color: TurnifyColors.textGray)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(widget.business.description, style: const TextStyle(color: TurnifyColors.textGray)),
-        ],
-      ),
+        );
+      },
     );
+
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
   }
 
-  Widget _buildServiceSelection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // --------------------
+  // UI
+  // --------------------
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primary = theme.primaryColor;
+    final scaffoldBg = theme.scaffoldBackgroundColor;
+    final appBarBg = theme.appBarTheme.backgroundColor ?? scaffoldBg;
+    final cardColor = theme.cardColor;
+    final surface = colorScheme.surface;
+    final onSurface = colorScheme.onSurface;
+    final brightness = theme.brightness;
+
+    // ignore: avoid_print
+    print('PantallaDetallesTurno build -> brightness: $brightness, scaffoldBg: $scaffoldBg, cardColor: $cardColor');
+
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: appBarBg,
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back_ios, color: theme.iconTheme.color), onPressed: () => Navigator.pop(context)),
+        title: Text('Detalles De Tu Turno', style: theme.textTheme.titleLarge?.copyWith(color: primary, fontSize: 20, fontWeight: FontWeight.w600)),
+        centerTitle: true,
+      ),
+      body: Stack(
         children: [
-          const Text(
-            'Elige tu Servicio',
-            style: TextStyle(
-              color: TurnifyColors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 220),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _buildHeader(theme, primary, onSurface),
+              _buildBusinessDescriptionAndSchedule(theme, cardColor, primary),
+              _buildServiceSelection(theme, cardColor, primary),
+              _buildDateTimeSelection(theme, cardColor, primary),
+            ]),
           ),
-          const SizedBox(height: 10),
-          ...List.generate(widget.business.services.length, (index) {
-            final service = widget.business.services[index];
-            final isSelected = _selectedServiceIndex == index;
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedServiceIndex = index;
-                  // Si selecciona un servicio, borramos la hora para forzar a re-seleccionar
-                  _selectedTime = null; 
-                });
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: TurnifyColors.cardBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected 
-                      ? Border.all(color: TurnifyColors.primaryTeal, width: 2)
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(service['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                          Text(service['description'], style: const TextStyle(color: TurnifyColors.textGray, fontSize: 13)),
-                          const SizedBox(height: 5),
-                          Row(
-                            children: [
-                              const Icon(Icons.access_time, color: TurnifyColors.lightGray, size: 16),
-                              const SizedBox(width: 4),
-                              Text('${service['duration']} min', style: const TextStyle(color: TurnifyColors.lightGray, fontSize: 13)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${service['price']}\$',
-                      style: const TextStyle(
-                        color: TurnifyColors.primaryTeal,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected ? TurnifyColors.primaryTeal : TurnifyColors.lightGray.withOpacity(0.5),
-                      ),
-                      child: isSelected 
-                          ? const Icon(Icons.check, color: TurnifyColors.white, size: 12) 
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+          _buildSummaryFooter(theme, primary, surface),
         ],
       ),
     );
   }
 
-  Widget _buildDateTimeSelection() {
+  Widget _buildHeader(ThemeData theme, Color primary, Color onSurface) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Fecha y Hora del Turno',
-            style: TextStyle(
-              color: TurnifyColors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(widget.business.name, style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22, fontWeight: FontWeight.bold, color: onSurface)),
+        const SizedBox(height: 6),
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(color: primary.withOpacity(0.12), borderRadius: BorderRadius.circular(5)),
+            child: Text(widget.business.category, style: theme.textTheme.bodySmall?.copyWith(color: primary, fontSize: 13, fontWeight: FontWeight.w500)),
           ),
-          const SizedBox(height: 15),
-          // Selector de Fecha
-          GestureDetector(
-            onTap: () => _selectDate(context),
-            child: Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: TurnifyColors.cardBackground,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined, color: TurnifyColors.primaryTeal),
-                  const SizedBox(width: 10),
-                  Text(
-                    _selectedDate == null
-                        ? 'Seleccionar Fecha'
-                        : 'Fecha: ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                    style: const TextStyle(fontSize: 16, color: TurnifyColors.black),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.arrow_forward_ios, color: TurnifyColors.lightGray, size: 18),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Selector de Hora
-          GestureDetector(
-            // Solo permitir seleccionar hora si se ha seleccionado un servicio primero
-            onTap: _selectedService != null 
-                ? () => _selectTime(context)
-                : null,
-            child: Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: TurnifyColors.cardBackground,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.access_time_outlined, 
-                    color: _selectedService != null ? TurnifyColors.primaryTeal : TurnifyColors.lightGray
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    _selectedTime == null
-                        ? (_selectedService != null ? 'Seleccionar Hora' : 'Selecciona un servicio primero')
-                        : 'Hora: ${_selectedTime!.format(context)}',
-                    style: TextStyle(
-                      fontSize: 16, 
-                      color: _selectedService != null ? TurnifyColors.black : TurnifyColors.lightGray
-                    ),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.arrow_forward_ios, color: TurnifyColors.lightGray, size: 18),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20), // Espacio final antes del resumen
-        ],
-      ),
+          const SizedBox(width: 8),
+          Icon(Icons.star, color: Colors.amber.shade700, size: 16),
+          const SizedBox(width: 6),
+          Text('${widget.business.rating.toStringAsFixed(1)} (${widget.business.services.length * 50} reseñas)', style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color)),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Icon(Icons.location_on_outlined, color: theme.dividerColor.withOpacity(0.9), size: 16),
+          const SizedBox(width: 6),
+          Expanded(child: Text(widget.business.address, style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color))),
+        ]),
+        const SizedBox(height: 10),
+      ]),
     );
   }
 
+  Widget _buildBusinessDescriptionAndSchedule(ThemeData theme, Color cardColor, Color primary) {
+    final schedule = widget.business.schedule;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(widget.business.description, style: theme.textTheme.bodyMedium),
+        const SizedBox(height: 12),
+        Text('Horario de Trabajo', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: schedule.entries.map((e) {
+            final dayKey = e.key;
+            final slot = e.value;
+            final open = slot != null && _parseToMinutes(slot['start']!) < _parseToMinutes(slot['end']!);
+            final startEndText = open ? '${slot['start']}-${slot['end']}' : 'Cerrado';
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: open ? theme.primaryColor.withOpacity(0.08) : theme.dividerColor.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(_labelFromKey(dayKey), style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 8),
+                Text(startEndText, style: theme.textTheme.bodySmall),
+              ]),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+      ]),
+    );
+  }
 
-  Widget _buildSummaryFooter() {
-    final bool isReady = _selectedService != null && _selectedDate != null && _selectedTime != null;
-    
+  Widget _buildServiceSelection(ThemeData theme, Color cardColor, Color primary) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Elige tu Servicio', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 10),
+        ...List.generate(widget.business.services.length, (index) {
+          final service = widget.business.services[index];
+          final isSelected = _selectedServiceIndex == index;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedServiceIndex = index;
+                _selectedTime = null;
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: isSelected ? Border.all(color: primary, width: 2) : null,
+              ),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(service['name'], style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    Text(service['description'], style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(Icons.access_time, color: theme.textTheme.bodySmall?.color, size: 16),
+                      const SizedBox(width: 6),
+                      Text('${service['duration']} min', style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color)),
+                    ]),
+                  ]),
+                ),
+                const SizedBox(width: 8),
+                Text('${service['price']}\$', style: theme.textTheme.titleLarge?.copyWith(color: primary, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 10),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? primary : theme.dividerColor.withOpacity(0.5)),
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+                ),
+              ]),
+            ),
+          );
+        }),
+      ]),
+    );
+  }
+
+  Widget _buildDateTimeSelection(ThemeData theme, Color cardColor, Color primary) {
+    final dayLabel = _selectedDate == null ? 'Seleccionar Fecha' : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}';
+    final timeLabel = _selectedTime == null ? 'Seleccionar Hora' : _selectedTime!.format(context);
+    final slot = _selectedDate != null ? _slotForDate(_selectedDate!) : null;
+    final open = slot != null && _parseToMinutes(slot['start']!) < _parseToMinutes(slot['end']!);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Fecha y Hora del Turno', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => _selectDate(context),
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(10)),
+            child: Row(children: [
+              Icon(Icons.calendar_today_outlined, color: primary),
+              const SizedBox(width: 10),
+              Text(dayLabel, style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16)),
+              const Spacer(),
+              Icon(Icons.arrow_forward_ios, color: theme.textTheme.bodySmall?.color, size: 18),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: (_selectedDate != null && open) ? () => _selectTime(context) : null,
+          child: Opacity(
+            opacity: (_selectedDate != null && open) ? 1.0 : 0.6,
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                Icon(Icons.access_time_outlined, color: (_selectedDate != null && open) ? primary : theme.dividerColor),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _selectedDate == null
+                        ? 'Selecciona una fecha primero'
+                        : (!open ? 'Cerrado ese día' : (_selectedService == null ? 'Selecciona un servicio primero' : timeLabel)),
+                    style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: theme.textTheme.bodySmall?.color, size: 18),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ]),
+    );
+  }
+
+  Widget _buildSummaryFooter(ThemeData theme, Color primary, Color surface) {
+    final bool isReady = _isSelectionValid();
+    final priceText = _selectedService != null ? '${_selectedService!['price']}\$' : '0\$';
+
     return Positioned(
       bottom: 0,
       left: 0,
@@ -368,109 +453,55 @@ class _PantallaDetallesTurnoState extends State<PantallaDetallesTurno> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: TurnifyColors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
+          color: surface,
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, -5))],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Resumen
-            Text(
-              '🗓️ Resumen de tu Selección',
-              style: TextStyle(
-                color: TurnifyColors.primaryTeal,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+          Text('🗓️ Resumen de tu Selección', style: theme.textTheme.bodyMedium?.copyWith(color: primary, fontWeight: FontWeight.w600, fontSize: 16)),
+          const SizedBox(height: 10),
+          _buildSummaryDetail(theme, label: 'Servicio', value: _selectedService?['name'] ?? 'Pendiente', ready: _selectedService != null),
+          _buildSummaryDetail(theme, label: 'Duración', value: _selectedService != null ? '${_selectedService!['duration']} min' : 'Pendiente', ready: _selectedService != null),
+          _buildSummaryDetail(theme, label: 'Fecha', value: _selectedDate != null ? '${_selectedDate!.day}/${_selectedDate!.month}' : 'Pendiente', ready: _selectedDate != null),
+          _buildSummaryDetail(theme, label: 'Hora', value: _selectedTime != null ? _selectedTime!.format(context) : 'Pendiente', ready: _selectedTime != null),
+          const Divider(height: 20),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Total a pagar:', style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color, fontSize: 14)),
+              Text(priceText, style: theme.textTheme.headlineSmall?.copyWith(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+            ]),
+            ElevatedButton(
+              onPressed: isReady
+                  ? () {
+                      if (!_isSelectionValid()) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Horario seleccionado no válido.')));
+                        return;
+                      }
+                      // ignore: avoid_print
+                      print('Turno Agendado: ${_selectedService!['name']}, Fecha: $_selectedDate, Hora: $_selectedTime');
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Turno confirmado.')));
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              child: Text(isReady ? 'Confirmar Turno' : 'Faltan datos', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 16)),
             ),
-            const SizedBox(height: 10),
-            
-            // Detalles del Servicio
-            _buildSummaryDetail(
-              label: 'Servicio', 
-              value: _selectedService?['name'] ?? 'Pendiente', 
-              color: _selectedService == null ? TurnifyColors.lightGray : TurnifyColors.black
-            ),
-            _buildSummaryDetail(
-              label: 'Duración', 
-              value: _selectedService != null ? '${_selectedService!['duration']} min' : 'Pendiente',
-              color: _selectedService == null ? TurnifyColors.lightGray : TurnifyColors.black
-            ),
-            _buildSummaryDetail(
-              label: 'Fecha', 
-              value: _selectedDate != null ? '${_selectedDate!.day}/${_selectedDate!.month}' : 'Pendiente',
-              color: _selectedDate == null ? TurnifyColors.lightGray : TurnifyColors.black
-            ),
-            _buildSummaryDetail(
-              label: 'Hora', 
-              value: _selectedTime != null ? _selectedTime!.format(context) : 'Pendiente',
-              color: _selectedTime == null ? TurnifyColors.lightGray : TurnifyColors.black
-            ),
-
-            const Divider(height: 20),
-            
-            // Total y Botón
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Total a pagar:', style: TextStyle(color: TurnifyColors.textGray, fontSize: 14)),
-                    Text(
-                      _selectedService != null ? '${_selectedService!['price']}\$' : '0\$',
-                      style: const TextStyle(
-                        color: TurnifyColors.black,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                ElevatedButton(
-                  onPressed: isReady ? () {
-                    print('Turno Agendado: ${_selectedService!['name']}, Fecha: $_selectedDate, Hora: $_selectedTime');
-                    // TODO: Aquí iría la lógica final de confirmación
-                  } : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TurnifyColors.primaryTeal,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: Text(
-                    isReady ? 'Confirmar Turno' : 'Faltan datos',
-                    style: const TextStyle(color: TurnifyColors.white, fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ]),
+        ]),
       ),
     );
   }
 
-  Widget _buildSummaryDetail({required String label, required String value, required Color color}) {
+  Widget _buildSummaryDetail(ThemeData theme, {required String label, required String value, required bool ready}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$label:', style: const TextStyle(color: TurnifyColors.textGray, fontSize: 15)),
-          Text(value, style: TextStyle(color: color, fontSize: 15, fontWeight: FontWeight.w500)),
-        ],
-      ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('$label:', style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color, fontSize: 15)),
+        Text(value, style: theme.textTheme.bodySmall?.copyWith(color: ready ? theme.textTheme.bodyLarge?.color : theme.dividerColor, fontSize: 15, fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 }
