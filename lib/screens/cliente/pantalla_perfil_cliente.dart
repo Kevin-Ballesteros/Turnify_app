@@ -140,7 +140,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
     required VoidCallback onTap,
     }) {
     return Material(
-      color: Colors.transparent, // permite usar InkWell ripple sobre cualquier fondo
+      color: Colors.transparent, 
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
