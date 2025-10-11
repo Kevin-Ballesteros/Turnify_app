@@ -16,8 +16,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.10.0
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/Logo_Turnify.png
+    - assets/icons/icono_turnify.png
+    - assets/icons/turnify_icon_1024.png
+    - assets/icons/turnify_foreground.png
+    - assets/icons/turnify_background.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/turnify_icon_1024.png"
+  android_adaptive_icon:
+    foreground_image: "assets/icons/turnify_foreground.png"
+    background_image: "assets/icons/turnify_background.png"
