@@ -3,6 +3,7 @@ import 'pantalla_notificaciones.dart';
 import 'pantalla_perfil_cliente.dart';
 import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_agendar_turnos.dart';
+import 'pantalla_mis_turnos.dart';
 
 // Colores de Turnify (se mantiene primario por compatibilidad; no se usa para fondos principales)
 class TurnifyColors {
@@ -27,14 +28,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
 
   late final List<Widget> _widgetOptions = <Widget>[
     const _DashboardContent(), // 0: Inicio
-    Center(
-      child: Builder(builder: (context) {
-        return Text(
-          'Mis Turnos',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        );
-      }),
-    ), // 1: Mis Turnos
+    const PantallaMisTurnos(), // 1: Mis Turnos
     const PantallaPerfilCliente(), // 2: Perfil
     Center(
       child: Builder(builder: (context) {
