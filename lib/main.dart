@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/pantalla_bienvenida.dart';
 import 'screens/pantalla_modo_oscuro.dart';
-import 'theme_manager.dart'; 
+import 'theme_manager.dart';
+import 'providers/turnos_provider.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(create: (_) => ThemeManager(), child: const TurnifyApp()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeManager()),
+        ChangeNotifierProvider(create: (_) => TurnosProvider()),
+      ],
+      child: const TurnifyApp(),
+    ),
   );
 }
 

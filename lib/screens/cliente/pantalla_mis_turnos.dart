@@ -1,519 +1,338 @@
+// lib/screens/Pantalla_mis_turnos.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '/providers/turnos_provider.dart';
 import 'pantalla_reagendar_turnos.dart';
-import 'pantalla_ver_detalles.dart';
-
-// Colores de Turnify (valores base, se accede vía la extensión)
-class TurnifyColors {
-  static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
-  static const Color lightTeal = Color.fromARGB(255, 149, 214, 211);
-  static const Color textGray = Color(0xFF666666);
-  static const Color lightGray = Color(0xFF999999);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF333333);
-  static const Color cardBackground = Color(0xFFF5F5F5);
-}
-
-/// Helper immutable que contiene la paleta derivada del Theme
-class _TurnifyColors {
-  final bool isDark;
-  const _TurnifyColors(this.isDark);
-
-  Color get primaryTeal => const Color.fromARGB(255, 67, 188, 180);
-  Color get lightTeal => isDark ? const Color.fromARGB(255, 60, 150, 145) : const Color.fromARGB(255, 149, 214, 211);
-
-  Color get textGray => isDark ? Colors.grey.shade300 : const Color(0xFF666666);
-  Color get lightGray => isDark ? Colors.grey.shade400 : const Color(0xFF999999);
-
-  Color get white => isDark ? const Color(0xFF0B0B0B) : Colors.white;
-  Color get black => isDark ? Colors.white : const Color(0xFF333333);
-
-  Color get cardBackground => isDark ? const Color.fromARGB(255, 20, 20, 20) : const Color(0xFFF5F5F5);
-}
-
-/// Extensión que expone la instancia vía context.turnify
-extension TurnifyExtension on BuildContext {
-  _TurnifyColors get turnify => _TurnifyColors(Theme.of(this).brightness == Brightness.dark);
-  bool get isDark => Theme.of(this).brightness == Brightness.dark;
-}
+import 'pantalla_cancelar_turnos.dart';
+import 'pantalla_ver_detalles.dart'; // ajusta si tu archivo tiene otro nombre
 
 class PantallaMisTurnos extends StatefulWidget {
-  const PantallaMisTurnos({super.key});
+  const PantallaMisTurnos({Key? key}) : super(key: key);
 
   @override
   State<PantallaMisTurnos> createState() => _PantallaMisTurnosState();
 }
 
-class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
-  // Filtro seleccionado
-  String filtroSeleccionado = 'Próximos';
+class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProviderStateMixin {
+  int _activeIndex = 0;
+  bool _loading = false;
 
-  // Lista de turnos de ejemplo
-  final List<Map<String, dynamic>> turnos = [
-    {
-      'negocio': 'Barbería El Estilo',
-      'tipo': 'Barbería',
-      'estado': 'Próximos',
-      'servicio': 'Corte de Pelo',
-      'fecha': 'Sábado, 26 de octubre 2025',
-      'hora': '10:00 AM',
-      'duracion': '30 min',
-      'precio': '25\$',
-      'ubicacion': 'Calle Principal 123',
-    },
-    {
-      'negocio': 'Consultorio Odontológico',
-      'tipo': 'Consultorio Luna',
-      'estado': 'Próximos',
-      'servicio': 'Limpieza Bucal',
-      'fecha': 'Lunes, 16 de octubre 2025',
-      'hora': '3:00 PM',
-      'duracion': '45 min',
-      'precio': '50\$',
-      'ubicacion': 'Avenida Central 456',
-    },
-    {
-      'negocio': 'Veterinaria San Martin',
-      'tipo': 'Veterinario',
-      'estado': 'Próximos',
-      'servicio': 'Consulta General',
-      'fecha': 'Miércoles, 5 de noviembre2025',
-      'hora': '11:30 AM',
-      'duracion': '30 min',
-      'precio': '48\$',
-      'ubicacion': 'Plaza Mayor 789',
-    },
-    {
-      'negocio': 'Spa Relax Total',
-      'tipo': 'Spa',
-      'estado': 'Completados',
-      'servicio': 'Masaje Relajante',
-      'fecha': 'Jueves, 6 de octubre 2025',
-      'hora': '2:00 PM',
-      'duracion': '60 min',
-      'precio': '60\$',
-      'ubicacion': 'Calle Spa 101',
-    },
-    {
-      'negocio': 'Peluquería Estilo',
-      'tipo': 'Peluquería',
-      'estado': 'Cancelados',
-      'servicio': 'Tinte de Cabello',
-      'fecha': 'Martes, 29 de septiembre 2025',
-      'hora': '4:00 PM',
-      'duracion': '90 min',
-      'precio': '45\$',
-      'ubicacion': 'Avenida Belleza 202',
-    },
-  ];
-
-  List<Map<String, dynamic>> get turnosFiltrados {
-    return turnos.where((t) => t['estado'] == filtroSeleccionado).toList();
+  @override
+  void initState() {
+    super.initState();
+    _maybeLoadSample();
   }
 
-  int get cantidadProximos => turnos.where((t) => t['estado'] == 'Próximos').length;
-  int get cantidadCompletados => turnos.where((t) => t['estado'] == 'Completados').length;
-  int get cantidadCancelados => turnos.where((t) => t['estado'] == 'Cancelados').length;
+  Future<void> _maybeLoadSample() async {
+    final prov = Provider.of<TurnosProvider>(context, listen: false);
+    if (prov.activos.isEmpty && prov.cancelados.isEmpty) {
+      setState(() => _loading = true);
+      await Future.delayed(const Duration(milliseconds: 250));
+      final now = DateTime.now();
+      final sample = <Map<String, dynamic>>[
+        {'id':'t1','negocio':'Barbería El Estilo','servicio':'Corte de Pelo','startAt': now.add(const Duration(days:3, hours:2)).toUtc().toIso8601String(),'duracion':30,'precio':255,'direccion':'Calle Principal 123','cancelado':false},
+        {'id':'t2','negocio':'Consultorio Odontológico','servicio':'Limpieza Bucal','startAt': now.add(const Duration(days:5, hours:6)).toUtc().toIso8601String(),'duracion':45,'precio':350,'direccion':'Avenida Central 456','cancelado':false},
+        {'id':'t3','negocio':'Veterinaria San Martín','servicio':'Consulta General','startAt': now.add(const Duration(days:7)).toUtc().toIso8601String(),'duracion':40,'precio':400,'direccion':'Plaza Mayor 789','cancelado':false},
+        {'id':'c1','negocio':'Spa Dental Centro','servicio':'Blanqueamiento','startAt': now.subtract(const Duration(days:6)).toUtc().toIso8601String(),'duracion':60,'precio':1200,'direccion':'Calle 8 #45','cancelado':false},
+        {'id':'c2','negocio':'Clínica Salud','servicio':'Consulta General','startAt': now.subtract(const Duration(days:4)).toUtc().toIso8601String(),'duracion':30,'precio':200,'direccion':'Av. Salud 12','cancelado':false},
+        {'id':'x1','negocio':'Centro Óptico','servicio':'Revisión Oftalmológica','startAt': now.add(const Duration(days:2)).toUtc().toIso8601String(),'duracion':30,'precio':150,'direccion':'Av Ojo 77','cancelado':true},
+      ];
+
+      final activos = sample.where((s) {
+        final d = DateTime.tryParse(s['startAt'] ?? '')?.toLocal();
+        return s['cancelado'] != true && d != null && d.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+      }).toList();
+
+      final completados = sample.where((s) {
+        final d = DateTime.tryParse(s['startAt'] ?? '')?.toLocal();
+        return s['cancelado'] != true && d != null && d.isBefore(DateTime.now());
+      }).toList();
+
+      final cancelados = sample.where((s) => s['cancelado'] == true).toList();
+
+      final provRef = Provider.of<TurnosProvider>(context, listen: false);
+      provRef.setTurnos(activos);
+      for (final c in completados) provRef.actualizarTurno(c);
+      for (final x in cancelados) provRef.moverACancelados(x);
+
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _abrirReagendar(Map<String, dynamic> turno) async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => ReagendarTurnoScreen(turno: turno)),
+    );
+    if (result == null) return;
+    final provider = Provider.of<TurnosProvider>(context, listen: false);
+    if (result['rescheduled'] == true && result['turno'] is Map<String, dynamic>) {
+      provider.actualizarTurno(Map<String, dynamic>.from(result['turno']));
+    } else if (result['cancelled'] == true && result['turno'] is Map<String, dynamic>) {
+      provider.moverACancelados(Map<String, dynamic>.from(result['turno']));
+    }
+  }
+
+  Future<void> _abrirCancelar(Map<String, dynamic> turno) async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => PantallaCancelarTurno(turno: turno)),
+    );
+    if (result == null) return;
+    final provider = Provider.of<TurnosProvider>(context, listen: false);
+    if (result['cancelled'] == true && result['turno'] is Map<String, dynamic>) {
+      provider.moverACancelados(Map<String, dynamic>.from(result['turno']));
+    } else if (result['rescheduled'] == true && result['turno'] is Map<String, dynamic>) {
+      provider.actualizarTurno(Map<String, dynamic>.from(result['turno']));
+    }
+  }
+
+  Widget _tabPill(String label, int count, int index, Color accent) {
+    final theme = Theme.of(context);
+    final selected = _activeIndex == index;
+    final textColor = selected ? accent : theme.textTheme.bodyLarge?.color?.withOpacity(0.85);
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _activeIndex = index),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(color: textColor, fontWeight: selected ? FontWeight.w700 : FontWeight.w600)),
+          const SizedBox(height: 6),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(color: selected ? accent : Theme.of(context).dividerColor.withOpacity(0.06), shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text('$count', style: TextStyle(color: selected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 4),
+        ]),
+      ),
+    );
+  }
+
+  Widget _cardTurno(Map<String, dynamic> turno, {bool showActions = true}) {
+    final theme = Theme.of(context);
+    final accent = const Color(0xFF4ECDC4);
+    final startAt = _parseStartAt(turno);
+    final fecha = startAt != null ? _formatFullDate(startAt) : (turno['fecha'] ?? '');
+    final hora = startAt != null ? _formatTimeLabel(startAt) : (turno['hora'] ?? '');
+    final estado = _calcularEstado(turno, startAt);
+
+    return Card(
+      color: theme.cardColor,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: Text(turno['negocio'] ?? '', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: theme.textTheme.titleLarge?.color))),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: BoxDecoration(color: _estadoColor(estado).withOpacity(0.12), borderRadius: BorderRadius.circular(8)), child: Text(estado, style: TextStyle(color: _estadoColor(estado), fontWeight: FontWeight.w700, fontSize: 12))),
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+              onSelected: (v) async {
+                if (v == 'details') Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaVerDetalles(turno: turno)));
+                if (v == 'cancel') await _abrirCancelar(turno);
+              },
+              itemBuilder: (_) => const [ PopupMenuItem(value: 'details', child: Text('Ver detalles')), PopupMenuItem(value: 'cancel', child: Text('Cancelar')), ],
+            ),
+          ]),
+          const SizedBox(height: 8),
+          Text(turno['servicio'] ?? '', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyLarge?.color)),
+          const SizedBox(height: 8),
+          Row(children: [
+            Icon(Icons.calendar_today, size: 14, color: theme.iconTheme.color),
+            const SizedBox(width: 6),
+            Flexible(child: Text(fecha, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
+            const SizedBox(width: 12),
+            Icon(Icons.access_time, size: 14, color: theme.iconTheme.color),
+            const SizedBox(width: 6),
+            Text(hora, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+          ]),
+          const SizedBox(height: 8),
+          Row(children: [
+            Icon(Icons.timer, size: 14, color: theme.iconTheme.color),
+            const SizedBox(width: 6),
+            Text('${turno['duracion']?.toString() ?? '30'} mins', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+            const SizedBox(width: 12),
+            Icon(Icons.attach_money, size: 14, color: theme.iconTheme.color),
+            const SizedBox(width: 6),
+            Text('${turno['precio']?.toString() ?? ''}', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+          ]),
+          const SizedBox(height: 8),
+          if ((turno['direccion'] ?? '').toString().isNotEmpty) Row(children: [
+            Icon(Icons.location_on, size: 14, color: theme.iconTheme.color),
+            const SizedBox(width: 6),
+            Flexible(child: Text(turno['direccion'] ?? '', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
+          ]),
+          if (showActions) const SizedBox(height: 12),
+          if (showActions) Row(children: [
+            OutlinedButton(onPressed: () => _abrirReagendar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: accent), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Reprogramar', style: TextStyle(color: accent))),
+            const SizedBox(width: 10),
+            OutlinedButton(onPressed: () => _abrirCancelar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: theme.dividerColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Cancelar', style: TextStyle(color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9)))),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  // Helpers
+  String _calcularEstado(Map<String, dynamic> turno, DateTime? startAt) {
+    final cancelled = turno['cancelado'] == true || turno['cancelled'] == true;
+    if (cancelled) return 'Cancelado';
+    if (startAt == null) return 'Programado';
+    final now = DateTime.now();
+    final duration = _parseDurationMinutes(turno);
+    final end = startAt.add(Duration(minutes: duration));
+    if (now.isAfter(end)) return 'Completado';
+    final diff = startAt.difference(now);
+    if (!diff.isNegative && diff.inHours < 24) return 'Próximo';
+    if (_isSameDate(startAt, now)) return 'Hoy';
+    return 'Programado';
+  }
+
+  Color _estadoColor(String label) {
+    switch (label) {
+      case 'Cancelado': return Colors.red;
+      case 'Completado': return Colors.grey;
+      case 'Próximo':
+      case 'Hoy': return const Color(0xFF4ECDC4);
+      default: return Colors.blueGrey;
+    }
+  }
+
+  DateTime? _parseStartAt(Map<String, dynamic> turno) {
+    final sa = turno['startAt'];
+    if (sa is String) {
+      try { final dt = DateTime.tryParse(sa); if (dt != null) return dt.toLocal(); } catch (_) {}
+    }
+    final fecha = turno['fecha']; final hora = turno['hora'];
+    if (fecha is String && hora is String && fecha.isNotEmpty && hora.isNotEmpty) {
+      try {
+        final parts = fecha.split('-');
+        if (parts.length == 3) {
+          final y = int.parse(parts[0]); final m = int.parse(parts[1]); final d = int.parse(parts[2]);
+          final hm = hora.split(':'); final hh = int.parse(hm[0]); final mm = int.parse(hm[1]);
+          return DateTime(y, m, d, hh, mm);
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+  int _parseDurationMinutes(Map<String, dynamic> turno) {
+    final d = turno['duracion'] ?? turno['duration'] ?? '';
+    if (d is int) return d;
+    if (d is String) {
+      final m = RegExp(r'(\d+)').firstMatch(d);
+      if (m != null) return int.tryParse(m.group(1)!) ?? 30;
+    }
+    return 30;
+  }
+
+  String _formatFullDate(DateTime d) {
+    final weekday = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.weekday % 7];
+    final month = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][d.month - 1];
+    return '$weekday, ${d.day} de $month ${d.year}';
+  }
+
+  String _formatTimeLabel(DateTime d) {
+    final h = d.hour; final m = d.minute.toString().padLeft(2,'0');
+    final hh = h % 12 == 0 ? 12 : h % 12; final ampm = h >= 12 ? 'PM' : 'AM';
+    return '$hh:$m $ampm';
+  }
+
+  Widget _emptyState(String text) => Center(child: Text(text, style: const TextStyle(color: Colors.grey)));
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<TurnosProvider>(context);
+    final activos = provider.activos;
+    final cancelados = provider.cancelados;
+
+    final completados = activos.where((t) {
+      try {
+        final dt = DateTime.tryParse(t['startAt'] ?? '')?.toLocal();
+        return dt != null && dt.isBefore(DateTime.now());
+      } catch (_) { return false; }
+    }).toList();
+
+    final proximos = activos.where((t) {
+      try {
+        final dt = DateTime.tryParse(t['startAt'] ?? '')?.toLocal();
+        return dt != null && dt.isAfter(DateTime.now());
+      } catch (_) { return true; }
+    }).toList();
+
+    final theme = Theme.of(context);
+    final accent = const Color(0xFF4ECDC4);
+
     return Scaffold(
-      backgroundColor: TurnifyExtension(context).turnify.cardBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: TurnifyExtension(context).turnify.white,
-        elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'Mis Turnos',
-          style: TextStyle(
-            color: TurnifyExtension(context).turnify.primaryTeal,
-            fontWeight: FontWeight.w600,
-            fontSize: 22,
-          ),
-        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
         centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Subtítulo
-          Container(
-            width: double.infinity,
-            color: TurnifyExtension(context).turnify.white,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Text(
-              'Gestiona todas tus reservas',
-              style: TextStyle(
-                color: TurnifyExtension(context).turnify.lightGray,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-
-          // Filtros de estado
-          Container(
-            color: TurnifyExtension(context).turnify.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildFilterChip('Próximos', cantidadProximos),
-                _buildFilterChip('Completados', cantidadCompletados),
-                _buildFilterChip('Cancelados', cantidadCancelados),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Lista de turnos
-          Expanded(
-            child: turnosFiltrados.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.event_busy,
-                          size: 80,
-                          color: TurnifyExtension(context).turnify.lightGray,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No tienes turnos $filtroSeleccionado',
-                          style: TextStyle(
-                            color: TurnifyExtension(context).turnify.lightGray,
-                            fontSize: 16,
+        title: Text('Mis Turnos', style: TextStyle(color: accent, fontWeight: FontWeight.w700)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(130),
+          child: Column(children: [
+            const SizedBox(height: 6),
+            // LayoutBuilder used to measure available width and place underline exactly centered
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalWidth = constraints.maxWidth;
+                  final sectionWidth = totalWidth / 3.0; // 3 tabs with some spacing
+                  final indicatorWidth = 66.0;
+                  final leftForIndex = (sectionWidth * _activeIndex) + (sectionWidth - indicatorWidth) / 2;
+                  return Column(
+                    children: [
+                      Row(children: [
+                        _tabPill('Próximos', proximos.length, 0, accent),
+                        _tabPill('Completados', completados.length, 1, accent),
+                        _tabPill('Cancelados', cancelados.length, 2, accent),
+                      ]),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        height: 6,
+                        child: Stack(children: [
+                          Positioned.fill(child: Container()), // spacing layer
+                          AnimatedPositioned(
+                            left: leftForIndex,
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
+                            child: Container(width: indicatorWidth, height: 4, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(6))),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: turnosFiltrados.length,
-                    itemBuilder: (context, index) {
-                      final turno = turnosFiltrados[index];
-                      return _buildTurnoCard(turno);
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, int cantidad) {
-    final bool isSelected = filtroSeleccionado == label;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          filtroSeleccionado = label;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? TurnifyExtension(context).turnify.primaryTeal : TurnifyExtension(context).turnify.cardBackground,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            Text(
-              '$cantidad',
-              style: TextStyle(
-                color: isSelected ? Colors.white : TurnifyExtension(context).turnify.black,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : TurnifyExtension(context).turnify.textGray,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTurnoCard(Map<String, dynamic> turno) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: TurnifyExtension(context).turnify.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: TurnifyExtension(context).isDark ? const Color.fromARGB(255, 28, 28, 28).withOpacity(0.6) : const Color.fromARGB(255, 28, 28, 28).withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header con nombre y menú
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: TurnifyExtension(context).turnify.primaryTeal.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.business,
-                  color: TurnifyExtension(context).turnify.primaryTeal,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      turno['negocio'],
-                      style: TextStyle(
-                        color: TurnifyExtension(context).turnify.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        ]),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: TurnifyExtension(context).turnify.primaryTeal,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          turno['tipo'],
-                          style: TextStyle(
-                            color: TurnifyExtension(context).turnify.primaryTeal,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.more_vert, color: TurnifyExtension(context).turnify.lightGray),
-                onPressed: () {
-                  _mostrarOpciones(context, turno);
+                    ],
+                  );
                 },
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Divider(height: 1, color: TurnifyExtension(context).turnify.cardBackground),
-          const SizedBox(height: 12),
-
-          // Información del turno
-          _buildInfoRow('Servicio:', turno['servicio']),
-          const SizedBox(height: 8),
-          _buildInfoRow('Fecha:', turno['fecha']),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _buildInfoRow('Hora:', turno['hora'])),
-              Expanded(child: _buildInfoRow('Duración:', turno['duracion'])),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildInfoRow('Precio:', turno['precio']),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.location_on, size: 16, color: TurnifyExtension(context).turnify.textGray),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  turno['ubicacion'],
-                  style: TextStyle(
-                    color: TurnifyExtension(context).turnify.textGray,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Botones de acción
-          if (turno['estado'] == 'Próximos') ...[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                   onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ReagendarTurnoScreen(turno: turno),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.refresh, size: 18, color: TurnifyExtension(context).turnify.primaryTeal),
-                    label: Text('Reprogramar'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: TurnifyExtension(context).turnify.primaryTeal,
-                      side: BorderSide(color: TurnifyExtension(context).turnify.primaryTeal),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _confirmarCancelacion(context, turno);
-                    },
-                    icon: Icon(Icons.cancel_outlined, size: 18, color: Colors.red),
-                    label: Text('Cancelar'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
-          ],
+            const SizedBox(height: 2),
+            const Divider(height: 1, thickness: 1),
+          ]),
+        ),
+      ),
+      body: _loading ? const Center(child: CircularProgressIndicator()) : IndexedStack(
+        index: _activeIndex,
+        children: [
+          proximos.isEmpty ? _emptyState('No tienes turnos próximos') : RefreshIndicator(
+            onRefresh: () async { await _maybeLoadSample(); },
+            child: ListView.builder(padding: const EdgeInsets.only(top: 12, bottom: 24), itemCount: proximos.length, itemBuilder: (_, i) => _cardTurno(proximos[i], showActions: true)),
+          ),
+          completados.isEmpty ? _emptyState('No tienes turnos completados') : ListView.builder(padding: const EdgeInsets.only(top: 12, bottom: 24), itemCount: completados.length, itemBuilder: (_, i) => _cardTurno(completados[i], showActions: false)),
+          cancelados.isEmpty ? _emptyState('No hay turnos cancelados') : ListView.builder(padding: const EdgeInsets.only(top: 12, bottom: 24), itemCount: cancelados.length, itemBuilder: (_, i) => _cardTurno(cancelados[i], showActions: false)),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: TurnifyExtension(context).turnify.textGray,
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              color: TurnifyExtension(context).turnify.black,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _mostrarOpciones(BuildContext context, Map<String, dynamic> turno) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          color: TurnifyExtension(context).turnify.white,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                turno['negocio'],
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: TurnifyExtension(context).turnify.black,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: Icon(Icons.info_outline, color: TurnifyExtension(context).turnify.primaryTeal),
-                title: Text('Ver detalles', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaVerDetalles(turno: turno)));
-                },
-              ),
-              if (turno['estado'] == 'Próximos') ...[
-                ListTile(
-                  leading: Icon(Icons.refresh, color: TurnifyExtension(context).turnify.primaryTeal),
-                  title: Text('Reprogramar', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    print('Reprogramar turno');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.cancel, color: Colors.red),
-                  title: Text('Cancelar turno', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _confirmarCancelacion(context, turno);
-                  },
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _confirmarCancelacion(BuildContext context, Map<String, dynamic> turno) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: TurnifyExtension(context).turnify.white,
-          title: Text('¿Cancelar turno?', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
-          content: Text(
-            '¿Estás seguro de que deseas cancelar tu turno en ${turno['negocio']}?',
-            style: TextStyle(color: TurnifyExtension(context).turnify.textGray),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('No', style: TextStyle(color: TurnifyExtension(context).turnify.lightGray)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  turno['estado'] = 'Cancelados';
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Turno cancelado exitosamente'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              },
-              child: const Text('Sí, cancelar', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-            ),
-          ],
-        );
-      },
     );
   }
 }
