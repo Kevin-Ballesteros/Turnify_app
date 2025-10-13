@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:turnify/screens/pantalla_ayuda.dart';
 import 'pantalla_notificaciones.dart';
 import 'pantalla_perfil_cliente.dart';
 import 'pantalla_configuracion_cliente.dart';
@@ -32,7 +31,6 @@ class _DashboardClienteState extends State<DashboardCliente> {
     const _DashboardContent(), // 0: Inicio
     const PantallaMisTurnos(), // 1: Mis Turnos
     const PantallaPerfilCliente(), // 2: Perfil
-    const PantallaAyuda()// 3: Ayuda
   ];
 
   void _onItemTapped(int index) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pantalla_reagendar_turnos.dart';
+import 'pantalla_ver_detalles.dart';
 
 // Colores de Turnify (valores base, se accede vía la extensión)
 class TurnifyColors {
@@ -53,7 +54,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       'tipo': 'Barbería',
       'estado': 'Próximos',
       'servicio': 'Corte de Pelo',
-      'fecha': 'Sábado, 24 de Agosto 2024',
+      'fecha': 'Sábado, 26 de octubre 2025',
       'hora': '10:00 AM',
       'duracion': '30 min',
       'precio': '25\$',
@@ -64,7 +65,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       'tipo': 'Consultorio Luna',
       'estado': 'Próximos',
       'servicio': 'Limpieza Bucal',
-      'fecha': 'Lunes, 26 de Agosto 2024',
+      'fecha': 'Lunes, 16 de octubre 2025',
       'hora': '3:00 PM',
       'duracion': '45 min',
       'precio': '50\$',
@@ -75,7 +76,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       'tipo': 'Veterinario',
       'estado': 'Próximos',
       'servicio': 'Consulta General',
-      'fecha': 'Miércoles, 28 de Agosto 2024',
+      'fecha': 'Miércoles, 5 de noviembre2025',
       'hora': '11:30 AM',
       'duracion': '30 min',
       'precio': '48\$',
@@ -86,7 +87,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       'tipo': 'Spa',
       'estado': 'Completados',
       'servicio': 'Masaje Relajante',
-      'fecha': 'Jueves, 15 de Agosto 2024',
+      'fecha': 'Jueves, 6 de octubre 2025',
       'hora': '2:00 PM',
       'duracion': '60 min',
       'precio': '60\$',
@@ -97,7 +98,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       'tipo': 'Peluquería',
       'estado': 'Cancelados',
       'servicio': 'Tinte de Cabello',
-      'fecha': 'Martes, 20 de Agosto 2024',
+      'fecha': 'Martes, 29 de septiembre 2025',
       'hora': '4:00 PM',
       'duracion': '90 min',
       'precio': '45\$',
@@ -451,8 +452,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                 leading: Icon(Icons.info_outline, color: TurnifyExtension(context).turnify.primaryTeal),
                 title: Text('Ver detalles', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
                 onTap: () {
-                  Navigator.pop(context);
-                  print('Ver detalles del turno');
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaVerDetalles(turno: turno)));
                 },
               ),
               if (turno['estado'] == 'Próximos') ...[
