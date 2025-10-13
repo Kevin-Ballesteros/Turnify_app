@@ -422,7 +422,7 @@ class _PantallaDetallesTurnoState extends State<PantallaDetallesTurno> {
         backgroundColor: appBarBg,
         elevation: 0,
         leading: IconButton(icon: Icon(Icons.arrow_back_ios, color: theme.iconTheme.color), onPressed: () => Navigator.pop(context)),
-        title: Text('Detalles De Tu Turno', style: theme.textTheme.titleLarge?.copyWith(color: primary, fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text('Detalles Del Servicio', style: theme.textTheme.titleLarge?.copyWith(color: primary, fontSize: 20, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: Stack(

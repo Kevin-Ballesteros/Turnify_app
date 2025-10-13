@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:turnify/screens/pantalla_ayuda.dart';
 import 'pantalla_notificaciones.dart';
 import 'pantalla_perfil_cliente.dart';
 import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_agendar_turnos.dart';
 import 'pantalla_mis_turnos.dart';
+
 
 // Colores de Turnify (se mantiene primario por compatibilidad; no se usa para fondos principales)
 class TurnifyColors {
@@ -30,14 +32,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
     const _DashboardContent(), // 0: Inicio
     const PantallaMisTurnos(), // 1: Mis Turnos
     const PantallaPerfilCliente(), // 2: Perfil
-    Center(
-      child: Builder(builder: (context) {
-        return Text(
-          'Ayuda',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        );
-      }),
-    ), // 3: Ayuda
+    const PantallaAyuda()// 3: Ayuda
   ];
 
   void _onItemTapped(int index) {

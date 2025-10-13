@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pantalla_reagendar_turnos.dart';
 
 // Colores de Turnify (valores base, se accede vía la extensión)
 class TurnifyColors {
@@ -25,7 +26,7 @@ class _TurnifyColors {
   Color get white => isDark ? const Color(0xFF0B0B0B) : Colors.white;
   Color get black => isDark ? Colors.white : const Color(0xFF333333);
 
-  Color get cardBackground => isDark ? const Color(0xFF0E0F10) : const Color(0xFFF5F5F5);
+  Color get cardBackground => isDark ? const Color.fromARGB(255, 20, 20, 20) : const Color(0xFFF5F5F5);
 }
 
 /// Extensión que expone la instancia vía context.turnify
@@ -115,15 +116,15 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.turnify.cardBackground,
+      backgroundColor: TurnifyExtension(context).turnify.cardBackground,
       appBar: AppBar(
-        backgroundColor: context.turnify.white,
+        backgroundColor: TurnifyExtension(context).turnify.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
           'Mis Turnos',
           style: TextStyle(
-            color: context.turnify.primaryTeal,
+            color: TurnifyExtension(context).turnify.primaryTeal,
             fontWeight: FontWeight.w600,
             fontSize: 22,
           ),
@@ -135,12 +136,12 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
           // Subtítulo
           Container(
             width: double.infinity,
-            color: context.turnify.white,
+            color: TurnifyExtension(context).turnify.white,
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
             child: Text(
               'Gestiona todas tus reservas',
               style: TextStyle(
-                color: context.turnify.lightGray,
+                color: TurnifyExtension(context).turnify.lightGray,
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
@@ -149,7 +150,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
 
           // Filtros de estado
           Container(
-            color: context.turnify.white,
+            color: TurnifyExtension(context).turnify.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -173,13 +174,13 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                         Icon(
                           Icons.event_busy,
                           size: 80,
-                          color: context.turnify.lightGray,
+                          color: TurnifyExtension(context).turnify.lightGray,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No tienes turnos $filtroSeleccionado',
                           style: TextStyle(
-                            color: context.turnify.lightGray,
+                            color: TurnifyExtension(context).turnify.lightGray,
                             fontSize: 16,
                           ),
                         ),
@@ -212,7 +213,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? context.turnify.primaryTeal : context.turnify.cardBackground,
+          color: isSelected ? TurnifyExtension(context).turnify.primaryTeal : TurnifyExtension(context).turnify.cardBackground,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -220,7 +221,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
             Text(
               '$cantidad',
               style: TextStyle(
-                color: isSelected ? Colors.white : context.turnify.black,
+                color: isSelected ? Colors.white : TurnifyExtension(context).turnify.black,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -228,7 +229,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : context.turnify.textGray,
+                color: isSelected ? Colors.white : TurnifyExtension(context).turnify.textGray,
                 fontSize: 12,
               ),
             ),
@@ -243,11 +244,11 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.turnify.white,
+        color: TurnifyExtension(context).turnify.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: context.isDark ? const Color.fromARGB(255, 28, 28, 28).withOpacity(0.6) : const Color.fromARGB(255, 28, 28, 28).withOpacity(0.05),
+            color: TurnifyExtension(context).isDark ? const Color.fromARGB(255, 28, 28, 28).withOpacity(0.6) : const Color.fromARGB(255, 28, 28, 28).withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -263,12 +264,12 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: context.turnify.primaryTeal.withOpacity(0.12),
+                  color: TurnifyExtension(context).turnify.primaryTeal.withOpacity(0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.business,
-                  color: context.turnify.primaryTeal,
+                  color: TurnifyExtension(context).turnify.primaryTeal,
                   size: 20,
                 ),
               ),
@@ -280,7 +281,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                     Text(
                       turno['negocio'],
                       style: TextStyle(
-                        color: context.turnify.black,
+                        color: TurnifyExtension(context).turnify.black,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -290,13 +291,13 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                         Icon(
                           Icons.location_on,
                           size: 14,
-                          color: context.turnify.primaryTeal,
+                          color: TurnifyExtension(context).turnify.primaryTeal,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           turno['tipo'],
                           style: TextStyle(
-                            color: context.turnify.primaryTeal,
+                            color: TurnifyExtension(context).turnify.primaryTeal,
                             fontSize: 12,
                           ),
                         ),
@@ -306,7 +307,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.more_vert, color: context.turnify.lightGray),
+                icon: Icon(Icons.more_vert, color: TurnifyExtension(context).turnify.lightGray),
                 onPressed: () {
                   _mostrarOpciones(context, turno);
                 },
@@ -314,7 +315,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
             ],
           ),
           const SizedBox(height: 16),
-          Divider(height: 1, color: context.turnify.cardBackground),
+          Divider(height: 1, color: TurnifyExtension(context).turnify.cardBackground),
           const SizedBox(height: 12),
 
           // Información del turno
@@ -333,13 +334,13 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.location_on, size: 16, color: context.turnify.textGray),
+              Icon(Icons.location_on, size: 16, color: TurnifyExtension(context).turnify.textGray),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   turno['ubicacion'],
                   style: TextStyle(
-                    color: context.turnify.textGray,
+                    color: TurnifyExtension(context).turnify.textGray,
                     fontSize: 13,
                   ),
                 ),
@@ -355,15 +356,19 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      print('Reprogramar turno: ${turno['negocio']}');
-                      // Navigator.push para pantalla de reagendar
+                   onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReagendarTurnoScreen(turno: turno),
+                        ),
+                      );
                     },
-                    icon: Icon(Icons.refresh, size: 18, color: context.turnify.primaryTeal),
+                    icon: Icon(Icons.refresh, size: 18, color: TurnifyExtension(context).turnify.primaryTeal),
                     label: Text('Reprogramar'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: context.turnify.primaryTeal,
-                      side: BorderSide(color: context.turnify.primaryTeal),
+                      foregroundColor: TurnifyExtension(context).turnify.primaryTeal,
+                      side: BorderSide(color: TurnifyExtension(context).turnify.primaryTeal),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -401,7 +406,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
         Text(
           label,
           style: TextStyle(
-            color: context.turnify.textGray,
+            color: TurnifyExtension(context).turnify.textGray,
             fontSize: 13,
           ),
         ),
@@ -410,7 +415,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
           child: Text(
             value,
             style: TextStyle(
-              color: context.turnify.black,
+              color: TurnifyExtension(context).turnify.black,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -429,7 +434,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(20),
-          color: context.turnify.white,
+          color: TurnifyExtension(context).turnify.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -438,13 +443,13 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: context.turnify.black,
+                  color: TurnifyExtension(context).turnify.black,
                 ),
               ),
               const SizedBox(height: 20),
               ListTile(
-                leading: Icon(Icons.info_outline, color: context.turnify.primaryTeal),
-                title: Text('Ver detalles', style: TextStyle(color: context.turnify.black)),
+                leading: Icon(Icons.info_outline, color: TurnifyExtension(context).turnify.primaryTeal),
+                title: Text('Ver detalles', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
                 onTap: () {
                   Navigator.pop(context);
                   print('Ver detalles del turno');
@@ -452,8 +457,8 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
               ),
               if (turno['estado'] == 'Próximos') ...[
                 ListTile(
-                  leading: Icon(Icons.refresh, color: context.turnify.primaryTeal),
-                  title: Text('Reprogramar', style: TextStyle(color: context.turnify.black)),
+                  leading: Icon(Icons.refresh, color: TurnifyExtension(context).turnify.primaryTeal),
+                  title: Text('Reprogramar', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
                   onTap: () {
                     Navigator.pop(context);
                     print('Reprogramar turno');
@@ -461,7 +466,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.cancel, color: Colors.red),
-                  title: Text('Cancelar turno', style: TextStyle(color: context.turnify.black)),
+                  title: Text('Cancelar turno', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
                   onTap: () {
                     Navigator.pop(context);
                     _confirmarCancelacion(context, turno);
@@ -480,16 +485,16 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: context.turnify.white,
-          title: Text('¿Cancelar turno?', style: TextStyle(color: context.turnify.black)),
+          backgroundColor: TurnifyExtension(context).turnify.white,
+          title: Text('¿Cancelar turno?', style: TextStyle(color: TurnifyExtension(context).turnify.black)),
           content: Text(
             '¿Estás seguro de que deseas cancelar tu turno en ${turno['negocio']}?',
-            style: TextStyle(color: context.turnify.textGray),
+            style: TextStyle(color: TurnifyExtension(context).turnify.textGray),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('No', style: TextStyle(color: context.turnify.lightGray)),
+              child: Text('No', style: TextStyle(color: TurnifyExtension(context).turnify.lightGray)),
             ),
             TextButton(
               onPressed: () {
