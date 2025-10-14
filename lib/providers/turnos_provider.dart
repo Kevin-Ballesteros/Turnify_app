@@ -69,4 +69,13 @@ class TurnosProvider extends ChangeNotifier {
     final n = (t['negocio'] ?? '').toString();
     return '$s|$n';
   }
+
+  // <-- Implementa esta función para evitar el error
+  void restaurarTurnoDesdeCancelados(Map<String, dynamic> turno) {
+    cancelados.removeWhere((t) => t['id'] == turno['id']);
+    // evita duplicados en activos
+    activos.removeWhere((t) => t['id'] == turno['id']);
+    activos.add(turno);
+    notifyListeners();
+  }
 }
