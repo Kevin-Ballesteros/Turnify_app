@@ -26,7 +26,7 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   static const _kAvatarColorKey = 'avatar_color';
   int? _avatarColorValue;
 
-  // Paleta (mantuve tus colores y añadí alguno útil)
+  // Paleta de colores para el avatar
   final List<Color> _avatarPalette = [
     const Color(0xFFEF5350), // rojo
     const Color(0xFFFFA726), // naranja
@@ -177,6 +177,11 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
     required Widget child,
     required ThemeData theme,
   }) {
+    final  isDarkMode = theme.brightness == Brightness.dark; // Esto es para Verificar si el tema es oscuro, para asi mismo darle un color diferente
+    final fieldColor = isDarkMode                         
+        ? const Color.fromARGB(255, 56, 56, 56) 
+        : const Color(0xFFF5F5F5);
+        
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -192,7 +197,7 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.06),
+            color: fieldColor, 
             borderRadius: BorderRadius.circular(12),
           ),
           child: child,
@@ -217,8 +222,9 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
     final textTheme = theme.textTheme;
     final scaffoldBg = theme.scaffoldBackgroundColor;
     final avatarBg = _avatarColorValue != null ? Color(_avatarColorValue!) : colorScheme.primary.withOpacity(0.12);
+    final isDarkMode = theme.brightness == Brightness.dark; // Esto es lo mismo que la linea 147, para verificar si el tema es oscuro y pues asi mismo darle un color diferente a diferente tema 
     final fieldStyle = textTheme.bodyLarge?.copyWith(
-      color: textTheme.bodyLarge?.color,
+      color: isDarkMode ? Colors.white : Colors.black,
       fontSize: 16,
     );
     final buttonTextStyle = textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: 16);
@@ -371,7 +377,7 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                       elevation: 0,
                     ),
-                    child: Text('Actualizar', style: buttonTextStyle?.copyWith(color: colorScheme.onPrimary)),
+                    child: Text('Actualizar', style: buttonTextStyle?.copyWith(color: Colors.white)),
                   ),
                 ),
                 const SizedBox(height: 30),
