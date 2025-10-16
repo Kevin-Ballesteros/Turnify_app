@@ -1,6 +1,5 @@
 // lib/screens/pantalla_editar_info_cliente.dart
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -341,28 +340,6 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Género
-                _buildFieldWithLabel(
-                  label: 'Género',
-                  theme: theme,
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: generoSeleccionado,
-                      isExpanded: true,
-                      icon: Icon(Icons.keyboard_arrow_down, color: Colors.black),
-                      style: fieldStyle,
-                      isDense: true,
-                      items: ['Masculino', 'Femenino'].map((String value) {
-                        return DropdownMenuItem<String>(value: value, child: Text(value));
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue == null) return;
-                        setState(() => generoSeleccionado = newValue);
-                      },
-                    ),
-                  ),
-                ),
 
                 const SizedBox(height: 40),
                 // Botón Actualizar
