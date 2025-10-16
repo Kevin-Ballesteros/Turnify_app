@@ -4,8 +4,15 @@ import 'screens/pantalla_bienvenida.dart';
 import 'screens/pantalla_modo_oscuro.dart';
 import 'theme_manager.dart';
 import 'providers/turnos_provider.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  // Asegura que Flutter esté inicializado antes de ejecutar código asíncrono
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializa el servicio de notificaciones
+  await NotificationService().initialize();
+  
   runApp(
     MultiProvider(
       providers: [
