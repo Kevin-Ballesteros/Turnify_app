@@ -15,7 +15,6 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   final _nombreCtrl = TextEditingController(text: 'José Fernando Campos');
   final _telefonoCtrl = TextEditingController(text: '+57 313 455 4666');
   final _correoCtrl = TextEditingController(text: 'josecampos@example.com');
-  String generoSeleccionado = 'Masculino';
 
   // Mantengo la propiedad por si en el futuro quieres soportar imagenes
   File? _avatarFile;
@@ -208,7 +207,7 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   Future<void> _onActualizar() async {
     if (!_formkey.currentState!.validate()) return;
 
-    // Placeholder para sincronizar con backend: aquí enviarías nombre, telefono, correo, genero y avatar_color.
+    // Placeholder para sincronizar con backend: aquí enviarías nombre, telefono, correo y avatar_color.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: const Text('Perfil actualizado exitosamente'), backgroundColor: Theme.of(context).colorScheme.primary),
     );

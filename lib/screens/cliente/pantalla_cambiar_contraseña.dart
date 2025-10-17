@@ -1,7 +1,8 @@
+// lib/screens/pantalla_cambiar_contrasena.dart
 import 'package:flutter/material.dart';
 import '/screens/pantalla_recuperar_password.dart';
 
-// Colores de Turnify
+// Colores de Turnify (fallback / tokens)
 class TurnifyColors {
   static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
   static const Color lightTeal = Color.fromARGB(255, 149, 214, 211);
@@ -25,7 +26,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
   final _contrasenaActualCtrl = TextEditingController();
   final _nuevaContrasenaCtrl = TextEditingController();
   final _confirmarContrasenaCtrl = TextEditingController();
-  
+
   bool _obscureActual = true;
   bool _obscureNueva = true;
   bool _obscureConfirmar = true;
@@ -65,26 +66,40 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Colores adaptativos según el tema
+    final bg = isDark ? colorScheme.background : Colors.white;
+    final primary = const Color.fromARGB(255, 69, 227, 222);
+    final onPrimary = Colors.white;
+    final labelColor = isDark ? colorScheme.onBackground : Colors.black87;
+    final hintColor = isDark ? colorScheme.onSurface.withOpacity(0.6) : Colors.black54;
+    
+    // Casillas: azul claro en modo claro, color adaptativo en modo oscuro
+    final inputFill = isDark 
+        ? colorScheme.surfaceVariant.withOpacity(0.5)
+        : const Color.fromARGB(255, 221, 221, 221);
+
     return Scaffold(
-      backgroundColor: TurnifyColors.white,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: TurnifyColors.white,
+        backgroundColor: bg,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: TurnifyColors.textGray,
-          ),
+          icon: Icon(Icons.arrow_back, color: primary),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         title: Text(
           'Cambiar Contraseña',
-          style: TextStyle(
-            color: Color.fromARGB(255, 67, 188, 180),
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+          style: textTheme.titleLarge?.copyWith(
+            color: primary, 
+            fontSize: 20, 
+            fontWeight: FontWeight.w600
           ),
         ),
         centerTitle: true,
@@ -100,32 +115,29 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                 // Campo Contraseña Actual
                 Text(
                   'Contraseña Actual',
-                  style: TextStyle(
-                    color: TurnifyColors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: labelColor, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w500
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _contrasenaActualCtrl,
                   obscureText: _obscureActual,
-                  style: TextStyle(color: TurnifyColors.textGray),
+                  style: textTheme.bodyLarge?.copyWith(color: labelColor),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 227, 227, 227),
+                    fillColor: inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureActual ? Icons.visibility_off : Icons.visibility,
-                        color: TurnifyColors.textGray,
+                        color: hintColor,
                       ),
                       onPressed: () {
                         setState(() {
@@ -134,65 +146,67 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                       },
                     ),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Ingrese la contraseña actual'
+                  validator: (v) => (v == null || v.trim().isEmpty) 
+                      ? 'Ingrese la contraseña actual' 
                       : null,
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Link "Olvidó Su Contraseña?"
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaRecuperarPassword()));
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (context) => const PantallaRecuperarPassword()
+                        )
+                      );
                     },
                     child: Text(
                       'Olvidó Su Contraseña?',
-                      style: TextStyle(
-                        color: TurnifyColors.primaryTeal,
-                        fontSize: 13,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: primary, 
+                        fontSize: 13
                       ),
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Campo Nueva Contraseña
                 Text(
                   'Nueva Contraseña',
-                  style: TextStyle(
-                    color: TurnifyColors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: labelColor, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w500
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _nuevaContrasenaCtrl,
                   obscureText: _obscureNueva,
-                  style: TextStyle(color: TurnifyColors.textGray),
+                  style: textTheme.bodyLarge?.copyWith(color: labelColor),
                   onChanged: (value) {
                     _validarNuevaContrasena(value);
                     _validarCoincidencia();
                   },
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 238, 238, 238),
+                    fillColor: inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureNueva ? Icons.visibility_off : Icons.visibility,
-                        color: TurnifyColors.textGray,
+                        _obscureNueva ? Icons.visibility_off : Icons.visibility, 
+                        color: hintColor
                       ),
                       onPressed: () {
                         setState(() {
@@ -212,60 +226,82 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Requisitos de Contraseña
                 Text(
                   'Requisitos de Contraseña:',
-                  style: TextStyle(
-                    color: TurnifyColors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: labelColor, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w500
                   ),
                 ),
                 const SizedBox(height: 12),
-                
-                _buildRequisito('Al menos 8 caracteres', _longitudMinima),
-                _buildRequisito('Una letra mayúscula (A-Z)', _letraMayuscula),
-                _buildRequisito('Una letra minúscula (a-z)', _letraMinuscula),
-                _buildRequisito('Un número (0-9)', _numero),
-                _buildRequisito('Un carácter especial (!@#\$%...)', _caracterEspecial),
-                
+
+                _buildRequisito(
+                  'Al menos 8 caracteres', 
+                  _longitudMinima, 
+                  primary, 
+                  labelColor
+                ),
+                _buildRequisito(
+                  'Una letra mayúscula (A-Z)', 
+                  _letraMayuscula, 
+                  primary, 
+                  labelColor
+                ),
+                _buildRequisito(
+                  'Una letra minúscula (a-z)', 
+                  _letraMinuscula, 
+                  primary, 
+                  labelColor
+                ),
+                _buildRequisito(
+                  'Un número (0-9)', 
+                  _numero, 
+                  primary, 
+                  labelColor
+                ),
+                _buildRequisito(
+                  'Un carácter especial (!@#\$%...)', 
+                  _caracterEspecial, 
+                  primary, 
+                  labelColor
+                ),
+
                 const SizedBox(height: 30),
-                
+
                 // Campo Confirmar Nueva Contraseña
                 Text(
                   'Confirmar Nueva Contraseña',
-                  style: TextStyle(
-                    color: TurnifyColors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: labelColor, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w500
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _confirmarContrasenaCtrl,
                   obscureText: _obscureConfirmar,
-                  style: TextStyle(color: TurnifyColors.textGray),
+                  style: textTheme.bodyLarge?.copyWith(color: labelColor),
                   onChanged: (value) {
                     _validarCoincidencia();
                   },
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 230, 230, 230),
+                    fillColor: inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmar ? Icons.visibility_off : Icons.visibility,
-                        color: TurnifyColors.textGray,
+                        color: hintColor,
                       ),
                       onPressed: () {
                         setState(() {
@@ -284,14 +320,19 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Indicador de coincidencia
-                _buildRequisito('Las contraseñas coinciden', _contrasenasCoinciden),
-                
+                _buildRequisito(
+                  'Las contraseñas coinciden', 
+                  _contrasenasCoinciden, 
+                  primary, 
+                  labelColor
+                ),
+
                 const SizedBox(height: 40),
-                
+
                 // Botón Cambiar Contraseña
                 SizedBox(
                   width: double.infinity,
@@ -302,31 +343,34 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
                         // Mostrar mensaje de éxito
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Contraseña actualizada exitosamente'),
+                            content: const Text('Contraseña actualizada exitosamente'),
                             backgroundColor: TurnifyColors.primaryTeal,
-                            duration: Duration(seconds: 2),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
-                        
+
                         // Regresar a la pantalla anterior después de 1 segundo
-                        Future.delayed(Duration(seconds: 1), () {
-                          Navigator.pop(context);
+                        Future.delayed(const Duration(seconds: 1), () {
+                          if (mounted) {
+                            Navigator.pop(context);
+                          }
                         });
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: TurnifyColors.primaryTeal,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color.fromARGB(255, 57, 189, 196),
+                      foregroundColor: onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cambiar Contraseña',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 16, 
                         fontWeight: FontWeight.w600,
+                        color: onPrimary,
                       ),
                     ),
                   ),
@@ -339,14 +383,15 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
     );
   }
 
-  Widget _buildRequisito(String texto, bool cumplido) {
+  // Helper: requisito con icono adaptativo
+  Widget _buildRequisito(String texto, bool cumplido, Color primaryColor, Color labelColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
           Icon(
             cumplido ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-            color: cumplido ? TurnifyColors.primaryTeal : TurnifyColors.lightGray,
+            color: cumplido ? primaryColor : labelColor.withOpacity(0.6),
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -354,7 +399,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
             child: Text(
               texto,
               style: TextStyle(
-                color: cumplido ? TurnifyColors.primaryTeal : TurnifyColors.lightGray,
+                color: cumplido ? primaryColor : labelColor.withOpacity(0.8),
                 fontSize: 13,
               ),
             ),
