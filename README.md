@@ -1,3 +1,3 @@
-# flutter_application_1
+# Turnify
 
 A new Flutter project.
