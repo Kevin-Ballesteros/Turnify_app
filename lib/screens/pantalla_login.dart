@@ -284,9 +284,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             );
                           }
                           // Validar credenciales de negocio
-                          else if (nombre == 'Veterinaria San Martin' && 
-                                  email == 'veterinariaSR@gmail.com' && 
-                                  password == 'LosToros213@') {
+                          else if (nombre == 'Barberia los santos' && 
+                                  email == 'barberiasantos@gmail.com' && 
+                                  password == 'barberia213@') {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => const DashboardNegocio()),

@@ -1,11 +1,26 @@
 // lib/screens/Pantalla_mis_turnos.dart
+import 'dart:async'; // ¡Importante para el Timer!
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '/providers/turnos_provider.dart';
-import 'pantalla_reagendar_turnos.dart';
 import 'pantalla_cancelar_turnos.dart';
-import 'pantalla_ver_detalles.dart'; // ajusta si tu archivo tiene otro nombre
+import 'pantalla_detalles_turnos.dart';
+
+
+// Se asumen estas clases Placeholder para que el código compile si no las tienes
+class ReagendarTurnoScreen extends StatelessWidget {
+  final Map<String, dynamic> turno;
+  const ReagendarTurnoScreen({super.key, required this.turno});
+  @override
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text('Reagendar Turno')), body: Center(child: Text('Pantalla de Reagendar para ${turno['negocio']}')));
+}
+class PantallaVerDetalles extends StatelessWidget {
+  final Map<String, dynamic> turno;
+  const PantallaVerDetalles({super.key, required this.turno});
+  @override
+  // Esta es la implementación que te lleva a la pantalla de detalles
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text('Detalles de ${turno['negocio']}')), body: Center(child: Text('Pantalla de Detalles para ${turno['negocio']}')));
+}
 
 class PantallaMisTurnos extends StatefulWidget {
   const PantallaMisTurnos({Key? key}) : super(key: key);
@@ -17,11 +32,63 @@ class PantallaMisTurnos extends StatefulWidget {
 class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProviderStateMixin {
   int _activeIndex = 0;
   bool _loading = false;
+  
+  // 1. Declarar el Timer
+  Timer? _timer; 
 
   @override
   void initState() {
     super.initState();
     _maybeLoadSample();
+    // 2. Inicializar el Timer para el contador en tiempo real
+    _startTimer();
+  }
+
+  BusinessData _mapTurnoToBusinessData(Map<String, dynamic> turno) {
+  // Los datos del turno solo tienen la información del negocio y el servicio reservado.
+  // Aquí simulamos los datos completos que necesita PantallaDetallesTurno.
+  
+  final servicioReservado = {
+    'name': turno['servicio'] ?? 'Servicio Desconocido',
+    'description': 'Duración: ${turno['duracion'] ?? 30} min.',
+    'duration': turno['duracion'] ?? 30, // en minutos
+    'price': turno['precio'] ?? 0,
+  };
+
+  return BusinessData(
+    name: turno['negocio'] ?? 'Negocio Desconocido',
+    category: 'Cita Reservada', // Categoría genérica
+    rating: 4.5, // Rating simulado
+    address: turno['direccion'] ?? 'Dirección no disponible',
+    description: 'Este es el detalle del negocio asociado al turno reservado. Aquí iría la descripción completa del negocio, simulada a partir de los datos del turno.',
+    // Solo mostramos el servicio reservado como la lista de servicios del negocio
+    services: [servicioReservado], 
+  );
+}
+  // 3. Crear la función para iniciar el Timer
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (mounted) {
+        // Llama a setState para recalcular las listas 'proximos' y 'completados'
+        setState(() {});
+      }
+    });
+  }
+
+  void _abrirDetallesDesdeTarjeta(Map<String, dynamic> turno) {
+  final businessData = _mapTurnoToBusinessData(turno);
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PantallaDetallesTurno(business: businessData),
+    ),
+  );
+}
+
+  @override
+  void dispose() {
+    // 4. Cancelar el Timer en dispose
+    _timer?.cancel(); 
+    super.dispose();
   }
 
   Future<void> _maybeLoadSample() async {
@@ -60,27 +127,43 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProvid
     }
   }
 
+  // Lógica de reagendar: ya incluye el setState para actualizar inmediatamente
   Future<void> _abrirReagendar(Map<String, dynamic> turno) async {
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(builder: (_) => ReagendarTurnoScreen(turno: turno)),
     );
     if (result == null) return;
     final provider = Provider.of<TurnosProvider>(context, listen: false);
+
     if (result['rescheduled'] == true && result['turno'] is Map<String, dynamic>) {
       provider.actualizarTurno(Map<String, dynamic>.from(result['turno']));
+      setState(() {
+        _activeIndex = 0; 
+      });
+      
     } else if (result['cancelled'] == true && result['turno'] is Map<String, dynamic>) {
       provider.moverACancelados(Map<String, dynamic>.from(result['turno']));
+      setState(() {
+        _activeIndex = 2; 
+      });
     }
   }
 
+  // Lógica de cancelar: ya incluye el setState para actualizar inmediatamente
   Future<void> _abrirCancelar(Map<String, dynamic> turno) async {
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(builder: (_) => PantallaCancelarTurno(turno: turno)),
     );
     if (result == null) return;
     final provider = Provider.of<TurnosProvider>(context, listen: false);
+    
+    // Si la cancelación fue exitosa y trae el turno
     if (result['cancelled'] == true && result['turno'] is Map<String, dynamic>) {
       provider.moverACancelados(Map<String, dynamic>.from(result['turno']));
+      
+      setState(() {
+        _activeIndex = 2; // Mueve al usuario a la pestaña "Cancelados"
+      });
     } else if (result['rescheduled'] == true && result['turno'] is Map<String, dynamic>) {
       provider.actualizarTurno(Map<String, dynamic>.from(result['turno']));
     }
@@ -89,7 +172,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProvid
   Widget _tabPill(String label, int count, int index, Color accent) {
     final theme = Theme.of(context);
     final selected = _activeIndex == index;
-    final textColor = selected ? accent : theme.textTheme.bodyLarge?.color?.withOpacity(0.85);
+    final textColor = selected ? accent : theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.85);
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _activeIndex = index),
@@ -110,7 +193,7 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProvid
     );
   }
 
-  Widget _cardTurno(Map<String, dynamic> turno, {bool showActions = true}) {
+Widget _cardTurno(Map<String, dynamic> turno, {bool showActions = true}) {
     final theme = Theme.of(context);
     final accent = const Color(0xFF4ECDC4);
     final startAt = _parseStartAt(turno);
@@ -118,67 +201,76 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProvid
     final hora = startAt != null ? _formatTimeLabel(startAt) : (turno['hora'] ?? '');
     final estado = _calcularEstado(turno, startAt);
 
-    return Card(
-      color: theme.cardColor,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(child: Text(turno['negocio'] ?? '', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: theme.textTheme.titleLarge?.color))),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: BoxDecoration(color: _estadoColor(estado).withOpacity(0.12), borderRadius: BorderRadius.circular(8)), child: Text(estado, style: TextStyle(color: _estadoColor(estado), fontWeight: FontWeight.w700, fontSize: 12))),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
-              onSelected: (v) async {
-                if (v == 'details') Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaVerDetalles(turno: turno)));
-                if (v == 'cancel') await _abrirCancelar(turno);
-              },
-              itemBuilder: (_) => const [ PopupMenuItem(value: 'details', child: Text('Ver detalles')), PopupMenuItem(value: 'cancel', child: Text('Cancelar')), ],
-            ),
+    // *** 1. ENVOLVEMOS EL CARD EN UN GESTUREDETECTOR ***
+    return GestureDetector(
+      onTap: () => _abrirDetallesDesdeTarjeta(turno), // <-- Llamamos a la nueva función aquí
+      child: Card(
+        color: theme.cardColor,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor)),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Text(turno['negocio'] ?? '', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: theme.textTheme.titleLarge?.color))),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: BoxDecoration(color: _estadoColor(estado).withOpacity(0.12), borderRadius: BorderRadius.circular(8)), child: Text(estado, style: TextStyle(color: _estadoColor(estado), fontWeight: FontWeight.w700, fontSize: 12))),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+                onSelected: (v) async {
+                  // Eliminamos la navegación a "Ver Detalles" del PopUp, ya que ahora va en el onTap del Card.
+                  // if (v == 'details') Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaVerDetalles(turno: turno)));
+                  if (v == 'cancel') await _abrirCancelar(turno);
+                },
+                itemBuilder: (_) => const [ 
+                  // Si quieres mantener "Ver detalles" en el PopUp, descomenta la línea de abajo y borra la línea que la precede.
+                  // PopupMenuItem(value: 'details', child: Text('Ver detalles')), 
+                  PopupMenuItem(value: 'cancel', child: Text('Cancelar')), 
+                ],
+              ),
+            ]),
+            const SizedBox(height: 8),
+            Text(turno['servicio'] ?? '', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyLarge?.color)),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.calendar_today, size: 14, color: theme.iconTheme.color),
+              const SizedBox(width: 6),
+              Flexible(child: Text(fecha, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
+              const SizedBox(width: 12),
+              Icon(Icons.access_time, size: 14, color: theme.iconTheme.color),
+              const SizedBox(width: 6),
+              Text(hora, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.timer, size: 14, color: theme.iconTheme.color),
+              const SizedBox(width: 6),
+              Text('${turno['duracion']?.toString() ?? '30'} mins', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+              const SizedBox(width: 12),
+              Icon(Icons.attach_money, size: 14, color: theme.iconTheme.color),
+              const SizedBox(width: 6),
+              Text('${turno['precio']?.toString() ?? ''}', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
+            ]),
+            const SizedBox(height: 8),
+            if ((turno['direccion'] ?? '').toString().isNotEmpty) Row(children: [
+              Icon(Icons.location_on, size: 14, color: theme.iconTheme.color),
+              const SizedBox(width: 6),
+              Flexible(child: Text(turno['direccion'] ?? '', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
+            ]),
+            if (showActions) const SizedBox(height: 12),
+            if (showActions) Row(children: [
+              OutlinedButton(onPressed: () => _abrirReagendar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: accent), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Reprogramar', style: TextStyle(color: accent))),
+              const SizedBox(width: 10),
+              OutlinedButton(onPressed: () => _abrirCancelar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: theme.dividerColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Cancelar', style: TextStyle(color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9)))),
+            ]),
           ]),
-          const SizedBox(height: 8),
-          Text(turno['servicio'] ?? '', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyLarge?.color)),
-          const SizedBox(height: 8),
-          Row(children: [
-            Icon(Icons.calendar_today, size: 14, color: theme.iconTheme.color),
-            const SizedBox(width: 6),
-            Flexible(child: Text(fecha, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
-            const SizedBox(width: 12),
-            Icon(Icons.access_time, size: 14, color: theme.iconTheme.color),
-            const SizedBox(width: 6),
-            Text(hora, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
-          ]),
-          const SizedBox(height: 8),
-          Row(children: [
-            Icon(Icons.timer, size: 14, color: theme.iconTheme.color),
-            const SizedBox(width: 6),
-            Text('${turno['duracion']?.toString() ?? '30'} mins', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
-            const SizedBox(width: 12),
-            Icon(Icons.attach_money, size: 14, color: theme.iconTheme.color),
-            const SizedBox(width: 6),
-            Text('${turno['precio']?.toString() ?? ''}', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85))),
-          ]),
-          const SizedBox(height: 8),
-          if ((turno['direccion'] ?? '').toString().isNotEmpty) Row(children: [
-            Icon(Icons.location_on, size: 14, color: theme.iconTheme.color),
-            const SizedBox(width: 6),
-            Flexible(child: Text(turno['direccion'] ?? '', style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85)))),
-          ]),
-          if (showActions) const SizedBox(height: 12),
-          if (showActions) Row(children: [
-            OutlinedButton(onPressed: () => _abrirReagendar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: accent), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Reprogramar', style: TextStyle(color: accent))),
-            const SizedBox(width: 10),
-            OutlinedButton(onPressed: () => _abrirCancelar(turno), style: OutlinedButton.styleFrom(side: BorderSide(color: theme.dividerColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('Cancelar', style: TextStyle(color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9)))),
-          ]),
-        ]),
+        ),
       ),
     );
   }
 
-  // Helpers
+  // Helpers (Sin cambios)
   String _calcularEstado(Map<String, dynamic> turno, DateTime? startAt) {
     final cancelled = turno['cancelado'] == true || turno['cancelled'] == true;
     if (cancelled) return 'Cancelado';
@@ -250,21 +342,27 @@ class _PantallaMisTurnosState extends State<PantallaMisTurnos> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Estas listas se recalculan cada vez que el Timer llama a setState o el Provider llama a notifyListeners()
     final provider = Provider.of<TurnosProvider>(context);
     final activos = provider.activos;
     final cancelados = provider.cancelados;
 
+    // Calculamos los completados y próximos basados en la hora actual
     final completados = activos.where((t) {
       try {
-        final dt = DateTime.tryParse(t['startAt'] ?? '')?.toLocal();
-        return dt != null && dt.isBefore(DateTime.now());
+        final dt = _parseStartAt(t);
+        final duration = _parseDurationMinutes(t);
+        // Es completado si la hora de fin ya pasó
+        return dt != null && dt.add(Duration(minutes: duration)).isBefore(DateTime.now());
       } catch (_) { return false; }
     }).toList();
 
     final proximos = activos.where((t) {
       try {
-        final dt = DateTime.tryParse(t['startAt'] ?? '')?.toLocal();
-        return dt != null && dt.isAfter(DateTime.now());
+        final dt = _parseStartAt(t);
+        final duration = _parseDurationMinutes(t);
+        // Es próximo si la hora de fin aún no ha pasado
+        return dt != null && dt.add(Duration(minutes: duration)).isAfter(DateTime.now());
       } catch (_) { return true; }
     }).toList();
 

@@ -5,6 +5,7 @@ import 'pantalla_perfil_cliente.dart';
 import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_agendar_turnos.dart';
 import 'pantalla_mis_turnos.dart';
+import 'pantalla_consultar_negocios.dart';
 
 
 // Colores de Turnify (se mantiene primario por compatibilidad; no se usa para fondos principales)
@@ -277,7 +278,7 @@ class _DashboardContent extends StatelessWidget {
             title: 'Consultar Negocios',
             subtitle: 'Explora y encuentra negocios cerca de ti',
             onTap: () {
-              // acción placeholder
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const PantallaConsultarNegocios()));
             },
           ),
 

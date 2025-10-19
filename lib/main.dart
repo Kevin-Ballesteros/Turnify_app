@@ -4,6 +4,7 @@ import 'screens/pantalla_bienvenida.dart';
 import 'screens/pantalla_modo_oscuro.dart';
 import 'theme_manager.dart';
 import 'providers/turnos_provider.dart';
+import 'providers/favoritos_provider.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -18,6 +19,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeManager()),
         ChangeNotifierProvider(create: (_) => TurnosProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritosProvider()),
       ],
       child: const TurnifyApp(),
     ),

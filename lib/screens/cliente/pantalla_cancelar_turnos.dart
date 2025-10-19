@@ -3,6 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+// Asumo la existencia de esta pantalla, aunque no está definida en el código proporcionado
+class Placeholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(title: Text('Reagendar Turno')), body: Center(child: Text('Pantalla de Reagendar')));
+  }
+}
+
 class TurnifyColors {
   static const Color primaryTeal = Color.fromARGB(255, 67, 188, 180);
   static const Color danger = Color(0xFFD9534F);
@@ -99,6 +107,7 @@ class _PantallaCancelarTurnoState extends State<PantallaCancelarTurno> {
 
   bool _isSameDate(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
+  // *** FUNCIÓN MODIFICADA PARA DEVOLVER EL TURNO COMPLETO ***
   Future<void> _confirmCancel() async {
     if (_motivoSeleccionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecciona un motivo de cancelación'), backgroundColor: Colors.orange));
@@ -106,15 +115,26 @@ class _PantallaCancelarTurnoState extends State<PantallaCancelarTurno> {
     }
 
     setState(() => _loading = true);
+    // Simulación de la cancelación en el servidor
     await Future.delayed(const Duration(milliseconds: 900));
     setState(() => _loading = false);
 
     final motivo = _motivoSeleccionado == 'Otro' ? _otroTexto.trim() : _motivoSeleccionado!;
-    final comentario = _comentariosController.text.trim();
+    _comentariosController.text.trim();
+
+    // 1. Clonar el turno actual y marcarlo como cancelado
+    final Map<String, dynamic> turnoCancelado = Map.from(widget.turno);
+    turnoCancelado['cancelado'] = true; 
+    turnoCancelado['motivoCancelacion'] = motivo;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Turno cancelado • Motivo: $motivo'), backgroundColor: Colors.green));
-      Navigator.of(context).pop({'cancelled': true, 'motivo': motivo, 'comentario': comentario});
+      
+      // 2. Devolver el turno cancelado al PantallaMisTurnos
+      Navigator.of(context).pop({
+        'cancelled': true, 
+        'turno': turnoCancelado, // Clave que espera PantallaMisTurnos
+      });
     }
   }
 
