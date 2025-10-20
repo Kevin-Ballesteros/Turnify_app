@@ -1,5 +1,7 @@
 // lib/screens/pantalla_perfil_cliente.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '/providers/user_provider.dart';
 import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_editar_info_cliente.dart';
 import 'package:turnify/screens/pantalla_bienvenida.dart';
@@ -29,6 +31,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
             ),
             TextButton(
               onPressed: () {
+                // Aquí deberías llamar a userProvider.clearUser() si tienes lógica de cierre de sesión
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const Pantalla1()),
@@ -45,6 +48,11 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Acceder al UserProvider para obtener los datos dinámicos
+    final userProvider = context.watch<UserProvider>(); 
+    final String userName = userProvider.customerName; 
+    final Color avatarColor = userProvider.avatarColor;
+    
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -61,7 +69,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
         automaticallyImplyLeading: false,
         title: Text(
           'Mi Perfil',
-          style: textTheme.titleLarge?.copyWith(color: Color.fromARGB(244, 30, 184, 171), fontSize: 20, fontWeight: FontWeight.w600),
+          style: textTheme.titleLarge?.copyWith(color: const Color.fromARGB(244, 30, 184, 171), fontSize: 20, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -70,27 +78,32 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
+              // 2. CircleAvatar con color dinámico
               CircleAvatar(
                 radius: 70,
-                backgroundColor: Color.fromARGB(244, 30, 184, 171).withOpacity(0.12),
+                // Fondo con el color del avatar + opacidad
+                backgroundColor: avatarColor.withOpacity(0.12),
                 child: Icon(
                   Icons.person,
-                  color: Color.fromARGB(244, 165, 224, 218),
+                  // Color del icono es el color del avatar
+                  color: avatarColor,
                   size: 85,
                 ),
               ),
               const SizedBox(height: 20),
+              // 3. Nombre del cliente dinámico
               Text(
-                'José Fernando Campos',
+                userName.isNotEmpty ? userName : 'Cliente Turnify', 
                 style: textTheme.headlineSmall?.copyWith(color: textTheme.titleLarge?.color, fontSize: 22, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 30),
+              // 4. Opciones con color de ícono dinámico
               _buildProfileOption(
                 icon: Icons.person_outline,
                 title: 'Perfil',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PantallaEditarInfoCliente())),
                 surface: surface,
-                iconColor: Color.fromARGB(244, 30, 184, 171),
+                iconColor: avatarColor, // Usar el color del avatar
                 titleStyle: textTheme.titleMedium,
                 splashColor: splash,
                 highlightColor: highlight,
@@ -101,7 +114,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
                 title: 'Configuración',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PantallaConfiguracionCliente())),
                 surface: surface,
-                iconColor: Color.fromARGB(244, 30, 184, 171),
+                iconColor: avatarColor, // Usar el color del avatar
                 titleStyle: textTheme.titleMedium,
                 splashColor: splash,
                 highlightColor: highlight,
@@ -112,7 +125,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente> {
                 title: 'Salir',
                 onTap: _mostrarDialogoSalir,
                 surface: surface,
-                iconColor: Color.fromARGB(244, 30, 184, 171),
+                iconColor: avatarColor, // Usar el color del avatar
                 titleStyle: textTheme.titleMedium,
                 splashColor: splash,
                 highlightColor: highlight,

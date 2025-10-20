@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'pantalla_login.dart';
 import 'cliente/pantalla_dashboard_cliente.dart';
 import 'negocio/pantalla_dashboard_negocio.dart';
+import '../providers/user_provider.dart';
+import '../providers/business_provider.dart';
+
 
 // Colores de Turnify
 class TurnifyColors {
@@ -28,6 +32,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   // Controladores comunes
   final _nombreCompletoCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _celularCtrl = TextEditingController(); // 💡 ¡NUEVO CONTROLADOR!
   final _passwordCtrl = TextEditingController();
   final _confirmarPasswordCtrl = TextEditingController();
 
@@ -41,13 +46,12 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   bool _obscureConfirmarPassword = true;
   bool _aceptaTerminos = false;
 
-  // Variables para validación de contraseña (Mantenidas para los checks)
+  // Variables para validación de contraseña
   bool _tieneMayuscula = false;
   bool _tieneMinuscula = false;
   bool _tieneNumero = false;
   bool _tieneCaracterEspecial = false;
   bool _tieneLongitudMinima = false;
-  // ELIMINADAS: _fortalezaPassword y _colorFortaleza
 
   @override
   void initState() {
@@ -59,6 +63,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   void dispose() {
     _nombreCompletoCtrl.dispose();
     _emailCtrl.dispose();
+    _celularCtrl.dispose(); // 🗑️ DISPOSE AÑADIDO
     _passwordCtrl.dispose();
     _confirmarPasswordCtrl.dispose();
     _nombreNegocioCtrl.dispose();
@@ -75,7 +80,6 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       _tieneNumero = password.contains(RegExp(r'[0-9]'));
       _tieneCaracterEspecial = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
       _tieneLongitudMinima = password.length >= 8;
-
     });
   }
 
@@ -108,6 +112,18 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Ingrese un email válido';
+    }
+    return null;
+  }
+
+  String? _validarCelular(String? value) {
+    if (!esCliente) return null; // Solo validar si es cliente
+    if (value == null || value.trim().isEmpty) {
+      return 'Ingrese su número de celular';
+    }
+    // Permite de 9 a 12 dígitos.
+    if (!RegExp(r'^\d{9,12}$').hasMatch(value.trim())) {
+      return 'Número de celular inválido (9-12 dígitos)';
     }
     return null;
   }
@@ -302,6 +318,39 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 ),
 
                 const SizedBox(height: 20),
+
+                // 🆕 CAMPO NÚMERO DE CELULAR (Solo Cliente)
+                if (esCliente) ...[
+                  Text(
+                    'Número de celular',
+                    style: TextStyle(
+                      color: TurnifyColors.textGray,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _celularCtrl,
+                    style: TextStyle(color: TurnifyColors.textGray),
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'Ej: 3001234567',
+                      filled: true,
+                      fillColor: TurnifyColors.inputGray,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    validator: _validarCelular,
+                  ),
+                  const SizedBox(height: 20),
+                ],
 
                 // Campo Contraseña
                 Text(
@@ -649,13 +698,37 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                       if (_formkey.currentState!.validate()) {
                         print('Creando cuenta ${esCliente ? "Cliente" : "Negocio"}...');
 
-                        // Navegar según el tipo de cuenta
+                        // Lógica de Guardado de Datos en Providers y Navegación
                         if (esCliente) {
+                          // Guardar datos del cliente
+                          final userProvider = context.read<UserProvider>();
+                          userProvider.setCustomerData(
+                            _nombreCompletoCtrl.text.trim(),
+                            _emailCtrl.text.trim(),
+                            _celularCtrl.text.trim(), // 💾 NÚMERO DE CELULAR AÑADIDO
+                          );
+
+                          // Navegar al dashboard de cliente
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (context) => const DashboardCliente()),
                           );
                         } else {
+                          // Guardar datos del negocio
+                          final String tipo = tipoNegocioSeleccionado == 'Otro'
+                              ? _otroTipoNegocioCtrl.text.trim()
+                              : tipoNegocioSeleccionado;
+
+                          final businessProvider = context.read<BusinessProvider>();
+
+                          businessProvider.setBusinessData(
+                            ownerName: _nombreCompletoCtrl.text.trim(),
+                            ownerEmail: _emailCtrl.text.trim(),
+                            businessName: _nombreNegocioCtrl.text.trim(),
+                            businessType: tipo,
+                            businessDescription: _descripcionNegocioCtrl.text.trim(),
+                          );
+
                           // Navegar al dashboard de negocio
                           Navigator.pushReplacement(
                             context,

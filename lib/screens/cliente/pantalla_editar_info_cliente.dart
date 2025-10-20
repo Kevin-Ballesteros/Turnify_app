@@ -1,7 +1,8 @@
 // lib/screens/pantalla_editar_info_cliente.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '/providers/user_provider.dart'; 
 
 class PantallaEditarInfoCliente extends StatefulWidget {
   const PantallaEditarInfoCliente({super.key});
@@ -12,17 +13,17 @@ class PantallaEditarInfoCliente extends StatefulWidget {
 
 class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   final _formkey = GlobalKey<FormState>();
-  final _nombreCtrl = TextEditingController(text: 'José Fernando Campos');
-  final _telefonoCtrl = TextEditingController(text: '+57 313 455 4666');
-  final _correoCtrl = TextEditingController(text: 'josecampos@example.com');
+  
+  // Controladores declarados como late
+  late final TextEditingController _nombreCtrl;
+  late final TextEditingController _telefonoCtrl;
+  late final TextEditingController _correoCtrl;
 
-  // Mantengo la propiedad por si en el futuro quieres soportar imagenes
   File? _avatarFile;
-  bool _picking = false;
+  final bool _picking = false;
 
-  // Persistencia de color del avatar
-  static const _kAvatarColorKey = 'avatar_color';
-  int? _avatarColorValue;
+  // 🐛 FLAG PARA CONTROLAR LA INICIALIZACIÓN
+  bool _isInitialized = false; 
 
   // Paleta de colores para el avatar
   final List<Color> _avatarPalette = [
@@ -40,29 +41,34 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   @override
   void initState() {
     super.initState();
-    _loadAvatarColor();
+    // 💡 IMPORTANTE: Dejamos initState LIMPÌO.
+    // La inicialización que usa el context (es decir, el Provider.of) se hace en didChangeDependencies.
+  }
+
+  @override
+  void didChangeDependencies() {
+    // 🚀 LUGAR CORREGIDO PARA USAR Provider.of en inicialización
+    if (!_isInitialized) {
+      // Usamos listen: false, ya que solo necesitamos leer el valor inicial.
+      final userProvider = Provider.of<UserProvider>(context, listen: false); 
+      
+      _nombreCtrl = TextEditingController(text: userProvider.customerName);
+      _telefonoCtrl = TextEditingController(text: userProvider.customerPhone);
+      _correoCtrl = TextEditingController(text: userProvider.customerEmail);
+      
+      _isInitialized = true; // Marcamos como inicializado
+    }
+    super.didChangeDependencies();
   }
 
   @override
   void dispose() {
+    // Ahora los controladores son 'late' y deben estar inicializados antes de dispose,
+    // gracias a didChangeDependencies.
     _nombreCtrl.dispose();
     _telefonoCtrl.dispose();
     _correoCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadAvatarColor() async {
-    final prefs = await SharedPreferences.getInstance();
-    final v = prefs.getInt(_kAvatarColorKey);
-    setState(() {
-      _avatarColorValue = v ?? _avatarPalette.first.value;
-    });
-  }
-
-  Future<void> _saveAvatarColor(Color color) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kAvatarColorKey, color.value);
-    setState(() => _avatarColorValue = color.value);
   }
 
   bool useWhiteForeground(Color backgroundColor, {double bias = 0.0}) {
@@ -72,11 +78,15 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
   // Abre la paleta horizontal; llamada desde el icono lápiz
   void _mostrarSelectorDeColores() {
     final theme = Theme.of(context);
+    final userProvider = context.read<UserProvider>(); 
+    
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       backgroundColor: theme.scaffoldBackgroundColor,
       builder: (context) {
+        final currentColorValue = context.watch<UserProvider>().avatarColor.value; 
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -89,12 +99,12 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: _avatarPalette.map((c) {
-                      final isSelected = _avatarColorValue == c.value;
+                      final isSelected = currentColorValue == c.value; 
                       return Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: GestureDetector(
                           onTap: () {
-                            _saveAvatarColor(c);
+                            userProvider.setAvatarColor(c);
                             Navigator.of(context).pop();
                           },
                           child: AnimatedContainer(
@@ -170,44 +180,16 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
     );
   }
 
-  Widget _buildFieldWithLabel({
-    required String label,
-    required Widget child,
-    required ThemeData theme,
-  }) {
-    final  isDarkMode = theme.brightness == Brightness.dark; // Esto es para Verificar si el tema es oscuro, para asi mismo darle un color diferente
-    final fieldColor = isDarkMode                         
-        ? const Color.fromARGB(255, 56, 56, 56) 
-        : const Color(0xFFF5F5F5);
-        
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: fieldColor, 
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: child,
-        ),
-      ],
-    );
-  }
-
   Future<void> _onActualizar() async {
     if (!_formkey.currentState!.validate()) return;
 
-    // Placeholder para sincronizar con backend: aquí enviarías nombre, telefono, correo y avatar_color.
+    // Llamar al método del Provider para actualizar info
+    await context.read<UserProvider>().updateProfile(
+      name: _nombreCtrl.text.trim(),
+      email: _correoCtrl.text.trim(),
+      phone: _telefonoCtrl.text.trim(),
+    );
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: const Text('Perfil actualizado exitosamente'), backgroundColor: Theme.of(context).colorScheme.primary),
     );
@@ -215,12 +197,17 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
 
   @override
   Widget build(BuildContext context) {
+    // ESCUCHAR EL PROVIDER PARA OBTENER LOS DATOS
+    final userProvider = context.watch<UserProvider>();
+    
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final scaffoldBg = theme.scaffoldBackgroundColor;
-    final avatarBg = _avatarColorValue != null ? Color(_avatarColorValue!) : colorScheme.primary.withOpacity(0.12);
-    final isDarkMode = theme.brightness == Brightness.dark; // Esto es lo mismo que la linea 147, para verificar si el tema es oscuro y pues asi mismo darle un color diferente a diferente tema 
+    
+    // OBTENER EL COLOR DEL PROVIDER
+    final avatarBg = userProvider.avatarColor; 
+    
+    final isDarkMode = theme.brightness == Brightness.dark;
     final fieldStyle = textTheme.bodyLarge?.copyWith(
       color: isDarkMode ? Colors.white : Colors.black,
       fontSize: 16,
@@ -256,7 +243,7 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                       },
                       child: CircleAvatar(
                         radius: 60,
-                        backgroundColor: avatarBg,
+                        backgroundColor: avatarBg, // USA EL COLOR DEL PROVIDER
                         backgroundImage: _avatarFile != null ? FileImage(_avatarFile!) : null,
                         child: _avatarFile == null
                             ? Icon(Icons.person, size: 60, color: useWhiteForeground(avatarBg) ? Colors.white : Colors.black)
@@ -348,8 +335,8 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                   child: ElevatedButton(
                     onPressed: _onActualizar,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 43, 188, 204),
-                      foregroundColor: colorScheme.onPrimary,
+                      backgroundColor: const Color.fromARGB(255, 43, 188, 204), // Color de fondo
+                      foregroundColor: Colors.white, // Color de texto/icono 
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                       elevation: 0,
                     ),
@@ -364,7 +351,8 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
                   child: OutlinedButton(
                     onPressed: _mostrarDialogoEliminarCuenta,
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.red, width: 2),
+                      side: const BorderSide(color: Colors.red, width: 2),
+                      foregroundColor: Colors.red, // Color de texto/icono 
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                     child: Text('Eliminar Cuenta', style: buttonTextStyle?.copyWith(color: Colors.red)),
@@ -377,4 +365,39 @@ class _PantallaEditarInfoClienteState extends State<PantallaEditarInfoCliente> {
       ),
     );
   }
+}
+
+// FUNCIÓN DE AYUDA FUERA DE LA CLASE STATE
+Widget _buildFieldWithLabel({
+  required String label,
+  required Widget child,
+  required ThemeData theme,
+}) {
+  final isDarkMode = theme.brightness == Brightness.dark;
+  final fieldColor = isDarkMode 
+      ? const Color.fromARGB(255, 56, 56, 56) 
+      : const Color(0xFFF5F5F5);
+    
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: fieldColor, 
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: child,
+      ),
+    ],
+  );
 }

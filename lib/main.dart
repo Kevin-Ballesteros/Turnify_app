@@ -6,6 +6,9 @@ import 'theme_manager.dart';
 import 'providers/turnos_provider.dart';
 import 'providers/favoritos_provider.dart';
 import 'services/notification_service.dart';
+import 'providers/user_provider.dart'; // Importa tu proveedor
+import 'providers/business_provider.dart';
+
 
 void main() async {
   // Asegura que Flutter esté inicializado antes de ejecutar código asíncrono
@@ -20,6 +23,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeManager()),
         ChangeNotifierProvider(create: (_) => TurnosProvider()),
         ChangeNotifierProvider(create: (_) => FavoritosProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => BusinessProvider()),
       ],
       child: const TurnifyApp(),
     ),

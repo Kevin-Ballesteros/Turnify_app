@@ -6,6 +6,8 @@ import 'pantalla_configuracion_cliente.dart';
 import 'pantalla_agendar_turnos.dart';
 import 'pantalla_mis_turnos.dart';
 import 'pantalla_consultar_negocios.dart';
+import '/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 
 
 // Colores de Turnify (se mantiene primario por compatibilidad; no se usa para fondos principales)
@@ -163,6 +165,9 @@ class _DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 2. OBTENER EL NOMBRE DEL USUARIO usando Consumer
+    final userProvider = Provider.of<UserProvider>(context);
+    final Color avatarColor = userProvider.avatarColor;
     final theme = Theme.of(context);
     final textPrimary = theme.textTheme.bodyLarge?.color;
     final textSecondary = theme.textTheme.bodyMedium?.color;
@@ -175,12 +180,17 @@ class _DashboardContent extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Header con avatar, nombre y iconos
           Row(children: [
-            // Avatar
-            CircleAvatar(
+              CircleAvatar(
               radius: 30,
-              backgroundColor: primary.withOpacity(0.18),
-              child: Icon(Icons.person, color: Colors.white, size: 35),
-            ),
+              // ✅ Usa el color del avatar para el fondo, con opacidad
+              backgroundColor: avatarColor.withOpacity(0.18), 
+              child: Icon(
+              Icons.person, 
+              // ✅ Usa el color del avatar directamente para el ícono
+              color: avatarColor, 
+              size: 35,
+              ), 
+              ),
             const SizedBox(width: 12),
 
             // Saludo y nombre
@@ -188,8 +198,11 @@ class _DashboardContent extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Hola, bienvenido a Turnify',
                     style: theme.textTheme.bodyMedium?.copyWith(color: textSecondary, fontSize: 14)),
-                Text('José Fernando Campos',
-                    style: theme.textTheme.bodyLarge?.copyWith(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                // 3. USAR LA VARIABLE DEL PROVIDER EN LUGAR DEL TEXTO FIJO
+                Text(
+                  userProvider.customerName, 
+                  style: theme.textTheme.bodyLarge?.copyWith(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ]),
             ),
 
@@ -206,7 +219,7 @@ class _DashboardContent extends StatelessWidget {
                   height: 45,
                   decoration: BoxDecoration(color: primary.withOpacity(0.18), shape: BoxShape.circle),
                   alignment: Alignment.center,
-                  child: Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
+                  child: Icon(Icons.notifications_outlined, color: const Color.fromARGB(255, 52, 198, 206), size: 24),
                 ),
               ),
               const SizedBox(width: 10),
@@ -313,8 +326,7 @@ class _AnimatedPressable extends StatefulWidget {
     required this.onTap,
     this.borderRadius,
     this.shape,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   State<_AnimatedPressable> createState() => _AnimatedPressableState();
